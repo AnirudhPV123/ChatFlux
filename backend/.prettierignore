@@ -1,0 +1,30 @@
+# Ignore generated files
+dist/
+build/
+coverage/
+*.min.js
+*.min.css
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore configuration files
+.eslint*
+.prettierignore
+.prettierrc*
+
+# Ignore gitignore and other version control files
+.gitignore
+.gitattributes
+.editorconfig
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.temp
+
+/.vscode
+
+*.env
+.env
+.env.*

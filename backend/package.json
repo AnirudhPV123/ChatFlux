@@ -1,0 +1,28 @@
+{
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "chat app using socket.io",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon -r dotenv/config --experimental-json-modules src/index.js"
+  },
+  "author": "Anirudh PV",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.4",
+    "socket.io": "^4.7.5",
+    "twilio": "^5.0.4",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "nodemon": "^3.1.0",
+    "prettier": "^3.2.5"
+  }
+}

@@ -1,0 +1,1 @@
+All user credential must be required - 400
