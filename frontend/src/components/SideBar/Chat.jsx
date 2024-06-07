@@ -31,7 +31,7 @@ function Chat({ chat }) {
     const now = moment();
 
     if (now.diff(messageTime, "hours") < 24) {
-      return messageTime.format("HH:mm a"); // Show hour and minute if less than 24 hours
+      return messageTime.format("H:mm a"); // Show hour and minute if less than 24 hours
     } else if (48 > now.diff(messageTime, "hours") > 24) {
       return "Yesterday";
     } else {
@@ -74,16 +74,18 @@ function Chat({ chat }) {
       <div className="message-info flex flex-col gap-2 text-xs">
         {chat?.lastMessageTime && (
           <div>
-            <h4 className="text-gray-400">{formattedTime}</h4>
+            <h4 className="text-green-500">{formattedTime}</h4>
           </div>
         )}
-        <div className="flex justify-end">
-          {chat?.notification && (
-            <div className="bg-green-500 w-4 h-4 rounded-full flex justify-center items-center">
-              <small className="text-white ">{chat?.notification}</small>
+        {chat?.notification > 0 && (
+          <div className="flex justify-end">
+            <div className="bg-green-500 px-1 h-4 min-w-4 rounded-full flex justify-center items-center">
+              <small className="text-black font-semibold ">
+                {chat?.notification}
+              </small>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

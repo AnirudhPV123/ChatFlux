@@ -104,7 +104,7 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
     {
       $match: {
         participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
-        // isGroupChat: false,
+        isGroupChat: false
       },
     },
     {
@@ -166,6 +166,72 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
       },
     },
   ]);
+
+
+
+
+
+  const checkingChat = await Conversation.aggregate([
+    {
+      $match: {
+        participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
+        isGroupChat: true,
+      },
+    },
+    {
+      $sort: {
+        updatedAt: -1,
+      },
+    },
+    {
+      $project: {
+        participants: 0,
+      },
+    },
+    {
+      $lookup: {
+        from: 'messages',
+        let: { messages: '$messages' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $in: ['$_id', '$$messages'] },
+                  { $in: [req.user._id, '$notifications'] }, // filter messages where notifications contain userId
+                ],
+              },
+            },
+          },
+          {
+            $sort: {
+              createdAt: 1, // sort messages by createdAt in ascending order
+            },
+          },
+        ],
+        as: 'messages',
+      },
+    },
+    {
+      $addFields: {
+        notification: { $size: '$messages' },
+        lastMessageTime: { $arrayElemAt: ['$messages.createdAt', -1] },
+      },
+    },
+  ]);
+
+
+    console.log('chats:', chats);
+console.log("checkingChats",checkingChat)
+
+if(checkingChat.length >0){
+chats.push(checkingChat[0])
+}
+
+
+console.log("newChats",chats)
+
+
 
   // Configure options for setting cookies
   const options = {

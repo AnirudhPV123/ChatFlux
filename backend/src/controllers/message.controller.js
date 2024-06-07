@@ -92,7 +92,13 @@ export const sendGroupMessage = asyncErrorHandler(async (req, res, next) => {
   const groupId = req.params.id;
   const { message } = req.body;
 
-  let newMessage = await Message.create({ senderId, groupId, message });
+  // add all participants id to notification array and whenever the participant seen the message their id remove from notification
+  // used to track whether participant seen the message or not and show notification
+  const group = await Conversation.findById(groupId)
+
+  const notifications = group.participants.filter((participant)=>!(participant._id).equals(senderId))
+
+  let newMessage = await Message.create({ senderId, groupId, message ,notifications});
 
   // Update conversation with new message
   let conversation = await Conversation.findById(groupId);
@@ -152,9 +158,14 @@ export const sendGroupMessage = asyncErrorHandler(async (req, res, next) => {
 export const getGroupMessage = asyncErrorHandler(async (req, res, next) => {
   const groupId = req.params.id;
 
+const check = await Message.updateMany(
+  { groupId: groupId },
+  { $pull: { notifications: req.user._id } },
+);
+
   const conversation = await Conversation.aggregate([
     {
-      $match: { _id: new mongoose.Types.ObjectId(groupId) },
+      $match: { _id: new mongoose.Types.ObjectId(groupId)},
     },
     {
       $lookup: {
@@ -180,7 +191,17 @@ export const getGroupMessage = asyncErrorHandler(async (req, res, next) => {
             as: 'message',
             in: {
               $mergeObjects: [
-                '$$message',
+                {
+                  senderId: '$$message.senderId',
+                  receiverId: '$$message.receiverId',
+                  message: '$$message.message',
+                  groupId: '$$message.groupId',
+                  conversationId: '$$message.conversationId',
+                  status: '$$message.status',
+                  createdAt: '$$message.createdAt',
+                  updatedAt: '$$message.updatedAt',
+                  _id: '$$message._id',
+                },
                 {
                   senderDetails: {
                     $let: {
@@ -200,7 +221,7 @@ export const getGroupMessage = asyncErrorHandler(async (req, res, next) => {
                       },
                       in: {
                         _id: '$$sender._id',
-                        phonNumber: '$$sender.phoneNumber',
+                        phoneNumber: '$$sender.phoneNumber',
                         userName: '$$sender.userName',
                         avatar: '$$sender.avatar',
                         // Add other fields you want to include, but exclude password and refreshToken
@@ -218,3 +239,88 @@ export const getGroupMessage = asyncErrorHandler(async (req, res, next) => {
 
   res.status(200).json(new CustomResponse(200, conversation[0].messages));
 });
+
+
+
+
+
+
+
+
+
+
+/*
+
+[
+  {
+    $match: { _id: ObjectId('666369b6fa0ec48b72f972ae') }
+  },
+  {
+    $lookup: {
+      from: 'messages',
+      localField: 'messages',
+      foreignField: '_id',
+      as: 'messageDetails'
+    }
+  },
+  {
+    $lookup: {
+      from: 'users',
+      localField: 'messageDetails.senderId',
+      foreignField: '_id',
+      as: 'senderDetails'
+    }
+  },
+  {
+    $project: {
+      messages: {
+        $map: {
+          input: '$messageDetails',
+          as: 'message',
+          in: {
+            $mergeObjects: [
+              '$$message',
+              {
+                senderDetails: {
+                  $let: {
+                    vars: {
+                      sender: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: '$senderDetails',
+                              as: 'sender',
+                              cond: { $eq: ['$$sender._id', '$$message.senderId'] }
+                            }
+                          },
+                          0
+                        ]
+                      }
+                    },
+                    in: {
+                      _id: '$$sender._id',
+                      phoneNumber: '$$sender.phoneNumber',
+                      userName: '$$sender.userName',
+                      avatar: '$$sender.avatar',
+                      // Add other fields you want to include, but exclude password and refreshToken
+                    }
+                  }
+                },
+                notifications: {
+                  $filter: {
+                    input: '$$message.notifications',
+                    as: 'notification',
+                    cond: { $ne: ['$$notification', ObjectId('666369b6fa0ec48b72f972ae')] } // Replace USER_ID_TO_REMOVE with the actual user ID
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+]
+
+
+*/

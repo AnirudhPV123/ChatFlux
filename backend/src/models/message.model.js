@@ -28,6 +28,12 @@ const messageSchema = new mongoose.Schema(
       enum: ['sent', 'delivered', 'seen'],
       // default: 'sent',
     },
+    notifications: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   { timestamps: true },
 );

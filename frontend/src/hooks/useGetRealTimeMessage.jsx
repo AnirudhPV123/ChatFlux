@@ -13,25 +13,35 @@ const useGetRealTimeMessage = () => {
   const socket = useSocket();
   const dispatch = useDispatch();
 
-  // set notification of a specific chat to 0 when receiver selected that chat
-  // receiver
+  // // set notification of a specific chat to 0 when receiver selected that chat
+  // // receiver
   useEffect(() => {
-    if (!chats || !selectedUser) return;
+    if (!chats || (!selectedUser && !selectedGroup)) return;
 
     const updatedChats = chats?.map((chat) => {
-      const participants = chat?.participants;
-      if (
-        participants &&
-        (participants[0]?._id === selectedUser?._id ||
-          participants[1]?._id === selectedUser?._id)
-      ) {
-        return { ...chat, notification: 0 };
+      // check chat id === selectedGroup._id
+      if (chat.isGroupChat && chat?._id === selectedGroup?._id) {
+        console.log("group");
+        return { ...chat,              lastMessageTime:null, notification: 0 };
       }
-      return chat;
+
+      // Check if selectedUser is one of the participants
+      // If selectedUser is a participant, set notification to 0
+      if (
+        !chat.isGroupChat &&
+        chat.participants.some(
+          (participant) => participant?._id === selectedUser?._id
+        )
+      ) {
+        return { ...chat, lastMessageTime:null, notification: 0 };
+      }
+      return chat; // Otherwise, return the chat unchanged
     });
 
+    console.log(updatedChats);
+
     dispatch(setChats(updatedChats));
-  }, [selectedUser]);
+  }, [selectedUser, selectedGroup]);
 
   // receiver gets new message from backend
   // send by backend or receiver (depends)
@@ -41,10 +51,14 @@ const useGetRealTimeMessage = () => {
       // check whether the senderId and selectedUser._id is equal
       // if set message status to seen and send status update to backend
       // else set message status to delivered and send status update to backend
-      if (selectedUser?._id === newMessage.senderId) {
+      if (
+        selectedUser &&
+        selectedUser?._id === newMessage.senderId &&
+        newMessage.conversationId
+      ) {
         newMessage.status = "seen";
         // check message exist
-        if (messages) {
+        if (messages[0]?.conversationId) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -57,21 +71,57 @@ const useGetRealTimeMessage = () => {
           "seen"
         );
       } else if (selectedGroup && selectedGroup?._id === newMessage?.groupId) {
-        if (messages) {
+        if (messages[0]?.groupId) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
         }
-      } else {
+
+        // participant seen the message so emit to remove participant id from message notification array
+        socket.emit(
+          "new_message_status_update_from_group_participant_to_backend",
+          newMessage._id
+          // newMessage.groupId
+        );
+      } else if (newMessage?.conversationId) {
         // message senderId !== selectedUser._id
         // so set status delivered
         const updatedChats = chats.map((chat) => {
           if (chat._id === newMessage.conversationId) {
-            return { ...chat, notification: (chat.notification || 0) + 1 };
+            return {
+              ...chat,
+              lastMessageTime: newMessage?.createdAt,
+              notification: (chat.notification || 0) + 1,
+            };
           } else {
             return chat;
           }
         });
+
+        dispatch(setChats(updatedChats));
+
+        // emit delivered status when sender is not selected
+        socket.emit(
+          "new_message_status_update_from_receiver_to_backend",
+          newMessage._id,
+          newMessage.conversationId,
+          "delivered"
+        );
+      } else if (newMessage?.groupId) {
+        // message senderId !== selectedUser._id
+        // so set status delivered
+        const updatedChats = chats.map((chat) => {
+          if (chat._id === newMessage.groupId) {
+            return {
+              ...chat,
+              lastMessageTime: newMessage?.createdAt,
+              notification: (chat.notification || 0) + 1,
+            };
+          } else {
+            return chat;
+          }
+        });
+
         dispatch(setChats(updatedChats));
 
         // emit delivered status when sender is not selected

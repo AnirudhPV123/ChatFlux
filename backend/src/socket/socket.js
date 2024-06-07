@@ -58,6 +58,22 @@ io.on('connection', (socket) => {
     },
   );
 
+  // when a participant seen the message , remove participant id from notification array
+  socket.on(
+    'new_message_status_update_from_group_participant_to_backend',
+    (newMessageId) => {
+      (async function () {
+        const updatedMessage = await Message.findByIdAndUpdate(
+          newMessageId,
+          {
+            $pull: { notifications: userId }, // Remove userId from notifications array
+          },
+          { new: true },
+        );
+      })()
+    },
+  );
+
   socket.on('disconnect', () => {
     delete userSocketMap[userId];
     io.emit('getOnlineUsers', Object.keys(userSocketMap));
