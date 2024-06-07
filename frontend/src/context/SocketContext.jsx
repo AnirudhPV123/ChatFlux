@@ -14,6 +14,8 @@ export const SocketProvider = ({ children }) => {
   React.useEffect(() => {
     if (authUser) {
       const socketio = io(`${import.meta.env.VITE_SERVER_URI}`, {
+        transports: ["websocket"],
+
         query: {
           userId: authUser._id,
         },

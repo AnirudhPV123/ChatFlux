@@ -374,6 +374,7 @@ export const logoutUser = asyncErrorHandler(async (req, res, next) => {
     secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
   };
 
+  console.log('logoutlogut')
   res.cookie('accessToken', '', options).cookie('refreshToken', '', options);
   res.status(200).json(new CustomResponse(200, 'User logout successfully'));
 });

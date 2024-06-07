@@ -10,7 +10,6 @@ const messageSchema = new mongoose.Schema(
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      // required: true,
     },
     message: {
       type: String,
@@ -19,7 +18,15 @@ const messageSchema = new mongoose.Schema(
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Conversation',
-      // required: true,
+    },
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Conversation',
+    },
+    status: {
+      type: String,
+      enum: ['sent', 'delivered', 'seen'],
+      // default: 'sent',
     },
   },
   { timestamps: true },

@@ -6,14 +6,14 @@ import useGetRealTimeChat from "../../hooks/useGetRealTimeChat";
 
 function AllChats() {
   useGetAllChats();
-  useGetRealTimeChat();
+  // useGetRealTimeChat();
   const { chats } = useSelector((store) => store.chat);
 
   const chatList = useMemo(() => {
-    return chats?.map((chat) => <MemoizedChat key={chat._id} chat={chat} />);
+    return chats?.map((chat) => <MemoizedChat key={chat?._id} chat={chat} />);
   }, [chats]);
 
-  if (!chats || chats.length === 0) {
+  if (!chats || chats?.length === 0) {
     return <div className="mx-4">No Chat yet.</div>;
   }
 

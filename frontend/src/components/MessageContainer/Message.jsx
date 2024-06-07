@@ -9,6 +9,7 @@ function Message({ message }) {
     (store) => store.user
   );
 
+
   let sender = false;
   if (authUser?._id === message?.senderId) {
     sender = true;
@@ -19,6 +20,8 @@ function Message({ message }) {
   }, [message]);
 
   const normalTime = moment(message?.updatedAt).format("H:mm a") || "";
+
+
 
   return (
     <div ref={scroll} className={`chat ${sender ? "chat-start" : "chat-end"} `}>
@@ -43,7 +46,7 @@ function Message({ message }) {
       <div className={`chat-bubble ${sender && "bg-[#747FFF] text-white"}`}>
         {message?.message}
       </div>
-      <div className="chat-footer opacity-50">Delivered</div>
+      <div className="chat-footer opacity-50">{message?.status}</div>
     </div>
   );
 }

@@ -73,7 +73,9 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { getUser, refreshToken } from "../api/user";
-import { setAuthUser, setResetState } from "../redux/userSlice";
+import { setAuthUser, setResetUserState } from "../redux/userSlice";
+import { setResetMessagesState } from "../redux/messageSlice";
+import { setResetChatsState } from "../redux/chatSlice";
 
 const useAuth = (authentication) => {
   const dispatch = useDispatch();
@@ -93,7 +95,9 @@ const useAuth = (authentication) => {
           await refreshToken();
           setTokenError(false);
         } catch (error) {
-          dispatch(setResetState());
+          dispatch(setResetUserState());
+          dispatch(setResetMessagesState())
+          dispatch(setResetChatsState())
           setTokenError(true);
         }
       } finally {

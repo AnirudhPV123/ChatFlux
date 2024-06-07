@@ -4,7 +4,6 @@ import { Conversation } from '../models/conversation.model.js';
 import { Message } from '../models/message.model.js';
 import { getReceiverSocketId, getSocketIds, io } from '../socket/socket.js';
 import mongoose from 'mongoose';
-import { User } from '../models/user.model.js';
 
 // @DESC Send a message between users and handle socket communication
 // @METHOD POST
@@ -26,7 +25,13 @@ export const sendMessage = asyncErrorHandler(async (req, res, next) => {
     });
   }
 
-  const newMessage = await Message.create({ senderId, receiverId, message });
+  const newMessage = await Message.create({
+    senderId,
+    receiverId,
+    conversationId: conversation._id,
+    message,
+    status:"sent"
+  });
 
   // Update conversation with new message
   conversation.messages.push(newMessage._id);
@@ -35,11 +40,12 @@ export const sendMessage = asyncErrorHandler(async (req, res, next) => {
   //   SOCKET.IO
   const receiverSocketId = getReceiverSocketId(receiverId);
 
+  // send new message to receiver
   if (receiverSocketId) {
-    io.to(receiverSocketId).emit('newMessage', newMessage);
+    io.to(receiverSocketId).emit('new_message', newMessage);
   }
 
-  res.status(201).json(new CustomResponse(201, newMessage));
+  return res.status(201).json(new CustomResponse(201, newMessage));
 });
 
 // @DESC Get messages between the specific users
@@ -50,11 +56,31 @@ export const getMessage = asyncErrorHandler(async (req, res, next) => {
   const receiverId = req.params.id;
   const senderId = req.user._id;
 
+  // check status is seen , otherwise update status to seen
+  const updateStatus = await Message.updateMany(
+    {
+      senderId: req.params.id, // only change status the message send by opposite user , in this case the getMessage called is receiver
+      receiverId: req.user._id,
+      status: { $ne: 'seen' },
+    },
+    {
+      $set: { status: 'seen' },
+    },
+  );
+
   const conversation = await Conversation.findOne({
     participants: { $all: [senderId, receiverId] },
   }).populate('messages');
 
-  res.status(200).json(new CustomResponse(200, conversation?.messages));
+  // the user call getMessage is sender and other is receiver thats why we use like this
+  // actually receiverId is the senderId of message
+  const socketId = getReceiverSocketId(receiverId);
+  // send status update to sender
+  if (updateStatus.modifiedCount > 0) {
+    io.to(socketId).emit('message_status_update_from_backend_to_sender', conversation._id, 'seen');
+  }
+
+  return res.status(200).json(new CustomResponse(200, conversation?.messages));
 });
 
 // @DESC Send group messages and handle socket communication
@@ -105,9 +131,14 @@ export const sendGroupMessage = asyncErrorHandler(async (req, res, next) => {
   let socketIds = getSocketIds();
 
   conversation.participants.forEach((userId) => {
+    // to prevent emit message to the senderItself
+    if (req.user._id.equals(userId)) {
+      return;
+    }
+
     const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
     if (socketId) {
-      io.to(socketId).emit('newMessage', newMessage[0]);
+      io.to(socketId).emit('new_message', newMessage[0]);
     }
   });
 

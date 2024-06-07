@@ -27,13 +27,13 @@ const userSlice = createSlice({
     setSelectedGroup: (state, action) => {
       state.selectedGroup = action.payload;
     },
-    setResetState: (state, action) => {
+    setResetUserState: (state, action) => {
       (state.authStatus = false),
         (state.authUser = null),
         (state.selectedUser = null),
         (state.onlineUsers = null),
         (state.availableUsers = null),
-        (state.selectedGroup = null)
+        (state.selectedGroup = null);
     },
   },
 });
@@ -43,6 +43,6 @@ export const {
   setOnlineUsers,
   setAvailableUsers,
   setSelectedGroup,
-  setResetState,
+  setResetUserState,
 } = userSlice.actions;
 export default userSlice.reducer;

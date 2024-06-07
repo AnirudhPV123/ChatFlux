@@ -9,7 +9,10 @@ const messageSlice = createSlice({
     setMessages: (state, action) => {
       state.messages = action.payload;
     },
+    setResetMessagesState: (state) => {
+      state.messages = null
+    }
   },
 });
-export const { setMessages } = messageSlice.actions;
+export const { setMessages,setResetMessagesState } = messageSlice.actions;
 export default messageSlice.reducer;

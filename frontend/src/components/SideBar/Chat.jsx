@@ -1,6 +1,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSelectedGroup, setSelectedUser } from "../../redux/userSlice";
+import moment from "moment";
 
 function Chat({ chat }) {
   const { authUser, onlineUsers } = useSelector((store) => store.user);
@@ -24,6 +25,23 @@ function Chat({ chat }) {
       dispatch(setSelectedUser(null));
     }
   };
+
+  const formatLastMessageTime = (lastMessageTime) => {
+    const messageTime = moment(lastMessageTime);
+    const now = moment();
+
+    if (now.diff(messageTime, "hours") < 24) {
+      return messageTime.format("HH:mm a"); // Show hour and minute if less than 24 hours
+    } else if (48 > now.diff(messageTime, "hours") > 24) {
+      return "Yesterday";
+    } else {
+      return messageTime.format("DD/MM/YYYY"); // Show date if 24 hours or more
+    }
+  };
+
+  // Usage
+  const lastMessageTime = chat?.lastMessageTime;
+  const formattedTime = formatLastMessageTime(lastMessageTime);
 
   return (
     <div
@@ -54,13 +72,17 @@ function Chat({ chat }) {
         </div>
       </div>
       <div className="message-info flex flex-col gap-2 text-xs">
-        <div>
-          <h4 className="text-gray-400">a few seconds ago</h4>
-        </div>
-        <div className="flex justify-end">
-          <div className="bg-green-500 w-4 h-4 rounded-full flex justify-center items-center">
-            <small className="text-white ">1</small>
+        {chat?.lastMessageTime && (
+          <div>
+            <h4 className="text-gray-400">{formattedTime}</h4>
           </div>
+        )}
+        <div className="flex justify-end">
+          {chat?.notification && (
+            <div className="bg-green-500 w-4 h-4 rounded-full flex justify-center items-center">
+              <small className="text-white ">{chat?.notification}</small>
+            </div>
+          )}
         </div>
       </div>
     </div>
