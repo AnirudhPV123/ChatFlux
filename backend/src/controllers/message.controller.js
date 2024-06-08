@@ -17,13 +17,14 @@ export const sendMessage = asyncErrorHandler(async (req, res, next) => {
   // Find or create conversation between sender and receiver
   let conversation = await Conversation.findOne({
     participants: { $all: [senderId, receiverId] },
+    isGroupChat: false,
   });
 
-  if (!conversation) {
-    conversation = await Conversation.create({
-      participants: [senderId, receiverId],
-    });
-  }
+  // if (!conversation) {
+  //   conversation = await Conversation.create({
+  //     participants: [senderId, receiverId],
+  //   });
+  // }
 
   const newMessage = await Message.create({
     senderId,
@@ -70,6 +71,7 @@ export const getMessage = asyncErrorHandler(async (req, res, next) => {
 
   const conversation = await Conversation.findOne({
     participants: { $all: [senderId, receiverId] },
+    isGroupChat: false,
   }).populate('messages');
 
   // the user call getMessage is sender and other is receiver thats why we use like this

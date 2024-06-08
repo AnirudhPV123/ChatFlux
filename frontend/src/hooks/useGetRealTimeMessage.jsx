@@ -22,7 +22,7 @@ const useGetRealTimeMessage = () => {
       // check chat id === selectedGroup._id
       if (chat.isGroupChat && chat?._id === selectedGroup?._id) {
         console.log("group");
-        return { ...chat,              lastMessageTime:null, notification: 0 };
+        return { ...chat, lastMessageTime: null, notification: 0 };
       }
 
       // Check if selectedUser is one of the participants
@@ -33,7 +33,7 @@ const useGetRealTimeMessage = () => {
           (participant) => participant?._id === selectedUser?._id
         )
       ) {
-        return { ...chat, lastMessageTime:null, notification: 0 };
+        return { ...chat, lastMessageTime: null, notification: 0 };
       }
       return chat; // Otherwise, return the chat unchanged
     });
@@ -58,7 +58,7 @@ const useGetRealTimeMessage = () => {
       ) {
         newMessage.status = "seen";
         // check message exist
-        if (messages[0]?.conversationId) {
+        if (messages[0]?.conversationId === newMessage.conversationId) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -71,7 +71,7 @@ const useGetRealTimeMessage = () => {
           "seen"
         );
       } else if (selectedGroup && selectedGroup?._id === newMessage?.groupId) {
-        if (messages[0]?.groupId) {
+        if (messages[0]?.groupId === newMessage.groupId) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -148,7 +148,7 @@ const useGetRealTimeMessage = () => {
   useEffect(() => {
     const handleMessageStatusUpdate = (conversationId, status) => {
       const updatedMessage = messages?.map((message) =>
-        message.conversationId === conversationId && message.status !== "seen"
+        message?.conversationId === conversationId && message.status !== "seen"
           ? { ...message, status: status }
           : message
       );
@@ -165,6 +165,6 @@ const useGetRealTimeMessage = () => {
         handleMessageStatusUpdate
       );
     };
-  }, [socket, messages, dispatch]);
+  }, [socket, messages, dispatch, chats]);
 };
 export default useGetRealTimeMessage;
