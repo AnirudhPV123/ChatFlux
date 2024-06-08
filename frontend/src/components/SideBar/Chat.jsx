@@ -45,33 +45,37 @@ function Chat({ chat }) {
 
   return (
     <div
-      className="user h-24 border border-gray-500 rounded-lg flex items-center justify-between px-8 mb-2 cursor-pointer"
+      className="user h-24 border border-gray-500 rounded-lg flex items-center justify-between px-8 mb-2 cursor-pointer "
       onClick={handleSelectUser}
     >
       <div className="user-info w-3/6 h-full flex items-center gap-4">
         {/* conditional avatar setup */}
         {isGroupChat ? (
-          <div className="rounded-full h-4/6 flex justify-center items-center aspect-square overflow-hidden bg-primary">
+          <div className="rounded-full h-4/6 flex justify-center items-center aspect-square bg-primary">
             <h2 className="text-3xl text-black font-semibold">
               {chat?.groupName.charAt(0).toUpperCase()}
             </h2>
           </div>
         ) : (
-          <div className={`avatar h-4/6  ${isOnline ? "online" : ""}`}>
+          <div
+            className={`rounded-full h-4/6 flex justify-center items-center aspect-square bg-primary avatar ${
+              isOnline ? "online" : ""
+            }`}
+          >
             <div className="rounded-full">
               <img src={user?.avatar} alt="User Avatar" />
             </div>
           </div>
         )}
 
-        <div>
-          <h3 className="text-lg font-semibold">
+        <div >
+          <h3 className="text-lg font-semibold whitespace-nowrap">
             {isGroupChat ? chat.groupName : user?.userName}
           </h3>
-          <h4 className="text-sm text-gray-400">No messages yet</h4>
+          {/* <h4 className="text-sm text-gray-400">No messages yet</h4> */}
         </div>
       </div>
-      <div className="message-info flex flex-col gap-2 text-xs">
+      <div className="message-info flex flex-col gap-2 text-xs ">
         {chat?.lastMessageTime && (
           <div>
             <h4 className="text-green-500">{formattedTime}</h4>

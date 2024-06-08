@@ -10,7 +10,7 @@ function Home() {
   useGetRealTimeChat()
 
   return (
-    <div className="home-container flex">
+    <div className="home-container flex overflow-y-clip">
       <SideBar />
       <MessageContainer />
     </div>

@@ -63,7 +63,7 @@ function ChatCreateOptions({ setAddChat }) {
 
   return (
     <div className="backdrop-blur-sm top-0 left-0 w-full h-full z-20 absolute">
-      <div className="card w-1/2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-neutral text-neutral-content z-10">
+      <div className="card w-[90vw] sm:w-1/2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-neutral text-neutral-content z-10">
         <div className="card-body flex gap-4">
           <h2 className="card-title">Create Chat</h2>
           <div className="form-control max-w-fit">

@@ -36,7 +36,7 @@ function Login() {
   };
 
   return (
-    <div className="card w-1/3 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-800 text-neutral-content z-10 px-6 py-4 ">
+    <div className="card w-4/5 md:w-1/2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 border border-gray-800 text-neutral-content z-10 px-6 py-4 ">
       <h2 className="text-2xl flex gap-2 mx-auto items-center font-semibold mb-4">
         Login
         <Lock />

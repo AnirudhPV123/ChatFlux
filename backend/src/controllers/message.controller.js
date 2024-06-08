@@ -189,11 +189,8 @@ const check = await Message.updateMany(
               $mergeObjects: [
                 {
                   senderId: '$$message.senderId',
-                  receiverId: '$$message.receiverId',
                   message: '$$message.message',
                   groupId: '$$message.groupId',
-                  conversationId: '$$message.conversationId',
-                  status: '$$message.status',
                   createdAt: '$$message.createdAt',
                   updatedAt: '$$message.updatedAt',
                   _id: '$$message._id',

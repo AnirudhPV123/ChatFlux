@@ -1,63 +1,19 @@
 import Messages from "./Messages";
 import ChatHeader from "./ChatHeader";
 import SendInput from "./SendInput";
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
-import { setChats } from "../../redux/chatSlice";
+import { useSelector } from "react-redux";
 
 function MessageContainer() {
   const { selectedUser, selectedGroup, authUser } = useSelector(
     (store) => store.user
   );
 
-  const { chats } = useSelector((store) => store.chat);
-
-
-const dispatch=useDispatch()
-
-  // set notification of a specific chat to 0 when receiver selected that chat
-  // receiver
-//   useEffect(() => {
-//     if (!chats || !selectedUser) return;
-//     console.log(chats);
-//     console.log(selectedUser);
-
-//     console.log(chats)
-//     const updatedChats = chats?.map((chat) => {
-//       // const participants = chat?.participants;
-//       // if (
-//       //   participants &&
-//       //   chat?.conversationId &&
-//       //   (participants[0]?._id === selectedUser?._id ||
-//       //     participants[1]?._id === selectedUser?._id)
-//       // ) {
-//       // chat?.participants.include(selectedUser?._id)
-
-//       console.log("parti",chat?.participants)
-//       const check = chat?.participants.some(
-//         (participant) => participant?._id === selectedUser?._id
-//       );
-
-
-//       console.log("truehai:",check)
-
-// // console.log("check1", chat?.participants[0]?._id === selectedUser?._id);
-// // console.log("check2", chat?.participants[1]?._id === selectedUser?._id);
-
-
-//         return { ...chat, notification: 0 };
-//       // }
-//       // return chat;
-//     });
-
-//     console.log(updatedChats);
-
-//     dispatch(setChats(updatedChats));
-//   }, [selectedUser]);
+  // used to dynamically show messageContainer or sideBar for smaller screen
+  if (window.innerWidth < 640 && !selectedUser && !selectedGroup) return;
 
   if (!selectedUser && !selectedGroup) {
     return (
-      <div className="w-2/3 h-[100vh] flex flex-col justify-center">
+      <div className="w-full sm:w-2/4 md:w-3/5 lg:w-2/3 h-[100vh] flex flex-col justify-center ">
         <h1 className="text-4xl font-semibold text-center mb-2">
           Hi, {authUser?.userName}{" "}
         </h1>
@@ -67,7 +23,7 @@ const dispatch=useDispatch()
   }
 
   return (
-    <div className=" w-2/3  h-[100vh]">
+    <div className={`w-full sm:w-2/4 md:w-3/5 lg:w-2/3 h-[100vh]`}>
       <ChatHeader />
       <Messages />
       <SendInput />

@@ -10,15 +10,16 @@ function AddChatBtn() {
   return (
     <div id="add-chat-button">
       <button
-        className="btn btn-primary text-white"
+        className="btn btn-primary text-white textarea-sm"
         onClick={() => {
           setAddChat(true);
         }}
       >
-        <Plus /> Add Chat
+        <Plus />
+        <h3 className="hidden xl:block">Add Chat</h3>
       </button>
 
-        {/* chat create option popup */}
+      {/* chat create option popup */}
       {addChat && <ChatCreateOptions setAddChat={setAddChat} />}
     </div>
   );

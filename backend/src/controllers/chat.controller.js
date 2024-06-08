@@ -87,7 +87,7 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
 
     // send status update to sender
     conversationIds.forEach((conversation) => {
-      const socketId = socketIds[conversation.participants]; 
+      const socketId = socketIds[conversation.participants];
       if (socketId) {
         io.to(socketId).emit(
           'message_status_update_from_backend_to_sender',
@@ -104,7 +104,7 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
     {
       $match: {
         participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
-        isGroupChat: false
+        isGroupChat: false,
       },
     },
     {
@@ -167,11 +167,7 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
     },
   ]);
 
-
-
-
-
-  const checkingChat = await Conversation.aggregate([
+  const groupChats = await Conversation.aggregate([
     {
       $match: {
         participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
@@ -220,18 +216,10 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
     },
   ]);
 
-
-    console.log('chats:', chats);
-console.log("checkingChats",checkingChat)
-
-if(checkingChat.length >0){
-chats.push(checkingChat[0])
-}
-
-
-console.log("newChats",chats)
-
-
+  // pushing group chats to one on one chat and combine then and return to frontend
+  if (groupChats.length > 0) {
+    groupChats.forEach((chat) => chats.push(chat));
+  }
 
   // Configure options for setting cookies
   const options = {

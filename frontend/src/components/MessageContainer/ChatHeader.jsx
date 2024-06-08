@@ -1,13 +1,24 @@
+import { ArrowBigLeft } from "lucide-react";
 import React from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setSelectedGroup, setSelectedUser } from "../../redux/userSlice";
 
 function ChatHeader() {
   const { selectedUser, selectedGroup, onlineUsers } = useSelector(
     (store) => store.user
   );
+
+  const dispatch=useDispatch()
+
+  const handleBackClick=()=>{
+    dispatch(setSelectedUser(null))
+    dispatch(setSelectedGroup(null))
+  }
+
   return (
-    <div className="h-[10%] flex items-center gap-4  border-b border-gray-700 ml-4">
-      <div className="w-16 h-16 rounded-full flex items-center justify-center bg-primary">
+    <div className="h-[10%] flex items-center  border-b border-gray-700 ml-4">
+      <ArrowBigLeft className={`size-8 mr-1 cursor-pointer hover:text-gray-600 ${window.innerWidth<640 ? "block" :'hidden'}`}  onClick={handleBackClick}/>
+      <div className="w-16 h-16 rounded-full flex items-center justify-center bg-primary mr-4">
         {/* conditional avatar setup */}
         {selectedUser && <img src={selectedUser?.avatar} alt="" />}
         {selectedGroup && (
