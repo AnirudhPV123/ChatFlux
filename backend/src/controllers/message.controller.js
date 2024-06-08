@@ -20,12 +20,6 @@ export const sendMessage = asyncErrorHandler(async (req, res, next) => {
     isGroupChat: false,
   });
 
-  // if (!conversation) {
-  //   conversation = await Conversation.create({
-  //     participants: [senderId, receiverId],
-  //   });
-  // }
-
   const newMessage = await Message.create({
     senderId,
     receiverId,
