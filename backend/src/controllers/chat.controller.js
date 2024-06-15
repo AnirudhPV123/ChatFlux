@@ -308,3 +308,61 @@ export const createAGroupChat = asyncErrorHandler(async (req, res, next) => {
 
   res.status(200).json(new CustomResponse(200, chat, 'Group chat created Successfully'));
 });
+
+export const deleteChat = asyncErrorHandler(async (req, res, next) => {
+  const id = req.params.id;
+
+  const result = await Conversation.findByIdAndDelete(id);
+  console.log('deleted', result);
+
+  if (!result) {
+    return res.status(500).json(new CustomError(500, 'Server error.'));
+  }
+
+  if (deleteChat?.isGroupChat) {
+    // SOCKET.IO
+    let socketIds = getSocketIds();
+    let conversation = await Conversation.findById(id);
+
+    conversation.participants.forEach((userId) => {
+      // to prevent emit message to the senderItself
+      if (req.user._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
+      if (socketId) {
+        io.to(socketId).emit('chat_deleted', deleteChat._id);
+      }
+    });
+  } else {
+    //   SOCKET.IO
+    const receiverSocketId = getReceiverSocketId(id);
+
+    // send new message to receiver
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('chat_deleted', deleteChat._id);
+    }
+  }
+
+  return res.status(200).json(new CustomResponse(200, result, 'Chat deleted Successfully'));
+});
+
+// export const blockChat = asyncErrorHandler(async (req, res, next) => {
+//   const chatId = req.params.id;
+//   const userId = req.user._id;
+
+//   console.log("here")
+
+//   const result = await Conversation.findOneAndUpdate(
+//     { _id: new mongoose.Types.ObjectId(chatId) },
+//     {
+//       $push: { block: { blockerId: userId } },
+//     },
+//     { new: true },
+//   );
+//   // const result = await Conversation.findById(chatId)
+
+//   console.log(result)
+// });
+ 

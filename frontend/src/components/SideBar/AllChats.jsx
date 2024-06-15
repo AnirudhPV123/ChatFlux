@@ -6,10 +6,16 @@ import useGetAllChats from "../../hooks/useGetAllChats";
 function AllChats() {
   useGetAllChats();
   const { chats } = useSelector((store) => store.chat);
+  const {chatSearch} = useSelector(store=>store.temporary)
 
   const chatList = useMemo(() => {
-    return chats?.map((chat) => <MemoizedChat key={chat?._id} chat={chat} />);
-  }, [chats]);
+    console.log("chatSE",chatSearch)
+    return chats?.map((chat) => {
+      if ((chatSearch && chatSearch.length >0 && chatSearch.find((cht)=>cht?._id === chat?._id)) || !chatSearch) {
+        return <MemoizedChat key={chat?._id} chat={chat} />;
+      }
+    });
+  }, [chats, chatSearch]);
 
   if (!chats || chats?.length === 0) {
     return (

@@ -27,8 +27,15 @@ const createAGroupChat = async ({ participants, groupName }) => {
   return await apiClient.post(`/api/v1/chat/group`, data);
 };
 
+
+const deleteChat = async (id) => {
+  return await apiClient.delete(`/api/v1/chat/delete/${id}`);
+};
+
+
 export {
   getAllChats,
   createAOneOnOneChat,
   createAGroupChat,
+  deleteChat,
 };

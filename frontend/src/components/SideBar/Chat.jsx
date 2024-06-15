@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setSelectedGroup, setSelectedUser } from "../../redux/userSlice";
 import moment from "moment";
+import { setSelectedChat } from "../../redux/userSlice";
 
 function Chat({ chat }) {
   const { authUser, onlineUsers } = useSelector((store) => store.user);
@@ -24,8 +25,9 @@ function Chat({ chat }) {
       dispatch(setSelectedGroup(chat));
       dispatch(setSelectedUser(null));
     }
-  };
+      dispatch(setSelectedChat(chat));
 
+  };
   const formatLastMessageTime = (lastMessageTime) => {
     const messageTime = moment(lastMessageTime);
     const now = moment();
@@ -45,7 +47,7 @@ function Chat({ chat }) {
 
   return (
     <div
-      className="user h-24 border border-gray-500 rounded-lg flex items-center justify-between px-8 mb-2 cursor-pointer "
+      className="user h-24 border border-gray-500 rounded-lg flex items-center justify-between px-8 mb-2 cursor-pointer hover:bg-gray-600"
       onClick={handleSelectUser}
     >
       <div className="user-info w-3/6 h-full flex items-center gap-4">
@@ -68,7 +70,7 @@ function Chat({ chat }) {
           </div>
         )}
 
-        <div >
+        <div>
           <h3 className="text-lg font-semibold whitespace-nowrap">
             {isGroupChat ? chat.groupName : user?.userName}
           </h3>

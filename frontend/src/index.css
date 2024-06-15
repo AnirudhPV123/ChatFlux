@@ -16,3 +16,11 @@ input[type=number] {
   -moz-appearance: textfield;
 }
 
+
+/* audio panel */
+.custom-audio::-webkit-media-controls-panel {
+  background-color: #747FFF; /* Change the background color to your desired color */
+}
+
+
+

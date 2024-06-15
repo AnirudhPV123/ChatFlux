@@ -9,6 +9,7 @@ const userSlice = createSlice({
     onlineUsers: null,
     availableUsers: null,
     selectedGroup: null,
+    selectedChat:null
   },
   reducers: {
     setAuthUser: (state, action) => {
@@ -35,6 +36,9 @@ const userSlice = createSlice({
         (state.availableUsers = null),
         (state.selectedGroup = null);
     },
+    setSelectedChat: (state, action) => {
+      state.selectedChat = action.payload;
+    },
   },
 });
 export const {
@@ -44,5 +48,6 @@ export const {
   setAvailableUsers,
   setSelectedGroup,
   setResetUserState,
+  setSelectedChat
 } = userSlice.actions;
 export default userSlice.reducer;

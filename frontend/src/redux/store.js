@@ -1,7 +1,8 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import userReducer from "./userSlice.js";
 import messageReducer from "./messageSlice.js";
-import chatReducer from "./chatSlice.js"
+import chatReducer from "./chatSlice.js";
+import temporarySlice from "./temporarySlice.js";
 import {
   persistReducer,
   FLUSH,
@@ -17,12 +18,14 @@ const persistConfig = {
   key: "root",
   version: 1,
   storage,
+  blacklist: ["temporary"], // Add temporarySlice to the blacklist
 };
 
 const rootReducer = combineReducers({
   user: userReducer,
   message: messageReducer,
-  chat:chatReducer
+  chat: chatReducer,
+  temporary: temporarySlice, // Add temporarySlice to rootReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

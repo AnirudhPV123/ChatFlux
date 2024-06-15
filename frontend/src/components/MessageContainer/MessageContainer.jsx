@@ -23,7 +23,7 @@ function MessageContainer() {
   }
 
   return (
-    <div className={`w-full sm:w-2/4 md:w-3/5 lg:w-2/3 h-[100vh]`}>
+    <div className={`w-full sm:w-2/4 md:w-3/5 lg:w-2/3 h-screen flex flex-col`}>
       <ChatHeader />
       <Messages />
       <SendInput />

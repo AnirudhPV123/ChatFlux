@@ -12,8 +12,10 @@ const messageSchema = new mongoose.Schema(
       ref: 'User',
     },
     message: {
-      type: String,
-      required: true,
+      content: { type: String, required: true },
+      type: { type: String, required: true },
+      format: { type: String, required: true },
+      caption: { type: String }, 
     },
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -33,9 +35,15 @@ const messageSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
       },
-    ],
+    ], 
+    messageReplyDetails: {
+      replyMessageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
+      replyMessageUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      status: { type: Boolean },
+    },
   },
   { timestamps: true },
 );
 
-export const Message = mongoose.model('Message', messageSchema);
+export const Message = mongoose.model('Message', messageSchema);    
+ 

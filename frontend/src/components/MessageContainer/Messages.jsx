@@ -4,29 +4,26 @@ import useGetMessages from "../../hooks/useGetMessages";
 import Message from "./Message";
 
 function Messages() {
-  useGetMessages();
 
+  useGetMessages();
   const { messages } = useSelector((store) => store.message);
 
   const messageList = useMemo(
     () =>
       messages &&
       messages.map((message) => (
-        // <div>message</div>
         <Message key={message?._id} message={message} />
       )),
     [messages]
   );
 
+  // if no message return empty div
   if (!messages || messages?.length === 0) {
-    return <div className="p-4 h-[80vh]"></div>;
+    return <div className="overflow-auto p-4 flex-grow"></div>;
   }
 
   return (
-    <div
-      id="chat-messages"
-      className="h-[80vh] overflow-auto p-4"
-    >
+    <div id="chat-messages" className="overflow-auto p-4 flex-grow">
       {messageList}
     </div>
   );

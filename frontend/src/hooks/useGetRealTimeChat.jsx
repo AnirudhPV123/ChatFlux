@@ -21,10 +21,28 @@ const useGetRealTimeChat = () => {
       socket.on("newChat", handleNewChat);
     }
 
-
     return () => {
       if (socket) {
         socket.off("newChat", handleNewChat);
+      }
+    };
+  }, [dispatch, socket, chats]);
+
+  // chat delete
+
+  useEffect(() => {
+    const handleChatDelete = (id) => {
+      const updatedChats = chats.filter((chat) => chat?._id !== id);
+      dispatch(setChats(updatedChats));
+    };
+
+    if (socket) {
+      socket.on("chat_deleted", handleChatDelete);
+    }
+
+    return () => {
+      if (socket) {
+        socket.off("chat_deleted", handleChatDelete);
       }
     };
   }, [dispatch, socket, chats]);

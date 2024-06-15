@@ -13,6 +13,8 @@ function useGetMessages() {
       if (selectedUser) {
         const res = await getMessages(selectedUser._id);
         dispatch(setMessages(res?.data?.data));
+                      console.log("erro hek", res);
+
       } else if (selectedGroup) {
         const res = await getGroupMessages(selectedGroup._id);
         dispatch(setMessages(res?.data?.data));

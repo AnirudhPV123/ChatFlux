@@ -71,7 +71,7 @@ const useGetRealTimeMessage = () => {
           "seen"
         );
       } else if (selectedGroup && selectedGroup?._id === newMessage?.groupId) {
-        if (messages[0]?.groupId === newMessage.groupId) {
+        if (messages[0]?.groupId === newMessage?.groupId) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -166,5 +166,22 @@ const useGetRealTimeMessage = () => {
       );
     };
   }, [socket, messages, dispatch, chats]);
+
+  useEffect(() => {
+    const handleMessageDeleted = (deletedMessageId) => {
+      const updatedMessage = messages?.map((message) =>
+        message?._id === deletedMessageId
+          ? { ...message, messageReplyDetails: null, message: null }
+          : message
+      );
+      dispatch(setMessages(updatedMessage));
+    };
+    socket.on("message_deleted", handleMessageDeleted);
+
+    return () => {
+      socket.off("message_deleted", handleMessageDeleted);
+    };
+  }, [socket, messages, dispatch, chats]);
 };
+
 export default useGetRealTimeMessage;
