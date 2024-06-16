@@ -4,7 +4,8 @@ const temporarySlice = createSlice({
   name: "temporary",
   initialState: {
     chatSearch: null,
-    messageReplyDetails: {status:false}, //reply message details (messageId,message owner id)
+    messageReplyDetails: {status:false}, //reply message details (messageId,message owner id),
+    groupMembers:null
     // selectedChat:null
   },
   reducers: {
@@ -17,8 +18,11 @@ const temporarySlice = createSlice({
     // setSelectedChat:(state,action)=>{
     //   state.selectedChat=action.payload
     // }
+    setGroupMembers:(state,action)=>{
+      state.groupMembers = action.payload
+    }
   },
 });
-export const { setChatSearch, setMessageReplyDetails } =
+export const { setChatSearch, setMessageReplyDetails,setGroupMembers } =
   temporarySlice.actions;
 export default temporarySlice.reducer;

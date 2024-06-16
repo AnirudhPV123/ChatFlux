@@ -68,7 +68,9 @@ function Message({ message }) {
   return (
     <div
       ref={scroll}
-      className={`chat ${isSender ? "chat-start" : "chat-end"} mb-2`}
+      className={`chat ${
+        authUser?._id === message?.senderId ? "chat-start" : authUser?._id !== message?.senderId &&"chat-end"
+      } mb-2`}
     >
       <div className="chat-image avatar w-8">
         <div className="w-10 rounded-full">
@@ -109,7 +111,10 @@ function Message({ message }) {
                   className="cursor-pointer"
                   onClick={async () => {
                     dispatch(setDeleteMessage({ messageId: message?._id }));
-                    await deleteMessage(message?._id,selectedUser?selectedUser?._id:selectedGroup?._id);
+                    await deleteMessage(
+                      message?._id,
+                      selectedUser ? selectedUser?._id : selectedGroup?._id
+                    );
                   }}
                 />
               )}

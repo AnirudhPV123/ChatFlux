@@ -179,11 +179,11 @@ export const getAllChats = asyncErrorHandler(async (req, res, next) => {
         updatedAt: -1,
       },
     },
-    {
-      $project: {
-        participants: 0,
-      },
-    },
+    // {
+    //   $project: {
+    //     participants: 0,
+    //   },
+    // },
     {
       $lookup: {
         from: 'messages',
@@ -294,8 +294,10 @@ export const createAGroupChat = asyncErrorHandler(async (req, res, next) => {
     {
       $project: { messages: 0 },
     },
-    ...chatCommonAggregation(),
+    // ...chatCommonAggregation(),
   ]);
+
+  console.log('gouprchatcreate', chat);
 
   let socketIds = getSocketIds();
 
@@ -365,4 +367,182 @@ export const deleteChat = asyncErrorHandler(async (req, res, next) => {
 
 //   console.log(result)
 // });
- 
+
+export const leaveGroup = asyncErrorHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+  const userId = req.user._id;
+
+  const result = await Conversation.findByIdAndUpdate(
+    { _id: new mongoose.Types.ObjectId(chatId) },
+    { $pull: { participants: userId } },
+    { new: true },
+  );
+
+  if (result) {
+    // SOCKET.IO
+    let socketIds = getSocketIds();
+    let conversation = await Conversation.findById(chatId);
+
+    conversation.participants.forEach((userId) => {
+      // to prevent emit message to the senderItself
+      if (req.user._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
+      if (socketId) {
+        io.to(socketId).emit('leave-group', userId, result._id);
+      }
+    });
+  }
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: result?._id }, 'Leaved group Successfully'));
+});
+
+// do further optimzation
+export const deleteGroup = asyncErrorHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+  const userId = req.user._id;
+
+  let conversation = await Conversation.findById(chatId);
+
+  const result = await Conversation.findByIdAndDelete(chatId);
+
+  if (result) {
+    // SOCKET.IO
+    let socketIds = getSocketIds();
+
+    conversation.participants.forEach((userId) => {
+      // to prevent emit message to the senderItself
+      if (req.user._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
+      if (socketId) {
+        io.to(socketId).emit('delete-group', result._id);
+      }
+    });
+  }
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: result?._id }, 'Group deleted Successfully'));
+});
+
+export const groupMembersDetails = asyncErrorHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+
+  const result = await Conversation.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(chatId) } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'participants',
+        foreignField: '_id',
+        as: 'membersDetails',
+      },
+    },
+    {
+      $project: {
+        membersDetails: 1,
+        groupAdmin: 1,
+        isGroupChat: 1,
+      },
+    },
+    {
+      $project: {
+        isGroupChat: 1,
+        groupAdmin: 1,
+
+        'membersDetails._id': 1,
+        'membersDetails.userName': 1,
+        'membersDetails.avatar': 1,
+      },
+    },
+  ]);
+
+  console.log('get groupmend', result);
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, result, 'Group members details fetched Successfully'));
+});
+
+// almost same has leaveGroup
+export const removeUserFromGroup = asyncErrorHandler(async (req, res, next) => {
+  const chatId = req.params.groupId;
+  const userId = req.params.userId;
+
+  console.log('remove userId', userId);
+  // do like this or if we get converstion after result we get only the updated conversation
+  let conversation = await Conversation.findById(chatId);
+
+  const result = await Conversation.findByIdAndUpdate(
+    { _id: new mongoose.Types.ObjectId(chatId) },
+    { $pull: { participants: userId } },
+    { new: true },
+  );
+
+  console.log('redmo ', result);
+
+  if (result) {
+    // SOCKET.IO
+    let socketIds = getSocketIds();
+
+    conversation.participants.forEach((userId) => {
+      // to prevent emit message to the senderItself
+      if (req.user._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
+      if (socketId) {
+        // userid and groupid
+        io.to(socketId).emit('remove-user-from-group', req.params.userId, result._id);
+      }
+    });
+  }
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: chatId }, 'User removed from group Successfully'));
+});
+
+export const addUserToGroup = asyncErrorHandler(async (req, res, next) => {
+  const { groupId, userId } = req.params;
+  console.log('groupId add', groupId);
+  console.log('usrId add', groupId);
+  let conversation = await Conversation.findById(groupId);
+
+  const result = await Conversation.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(groupId) },
+    { $push: { participants: userId } },
+    { new: true },
+  );
+
+  if (result) {
+    // SOCKET.IO
+    let socketIds = getSocketIds();
+
+    conversation.participants.forEach((userId) => {
+      // to prevent emit message to the senderItself
+      if (req.user._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
+      if (socketId) {
+        // userid and groupid
+        io.to(socketId).emit('add-user-to-group', req.params.userId, result._id);
+      }
+    });
+  }
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId, userId }, 'User added to group Successfully'));
+});
+
