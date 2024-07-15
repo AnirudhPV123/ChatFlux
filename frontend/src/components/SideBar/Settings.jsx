@@ -19,11 +19,11 @@ function settings() {
 
   return (
     <div className="">
-      <div className="dropdown dropdown-top h-[10vh]">
+      <div className="dropdown dropdown-top h-[10vh] w-full">
         <Cog className="size-10 my-3 mx-6" tabIndex={0} role="button" />
         <ul
           tabIndex={0}
-          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 left-4 border border-gray-500"
+          className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box left-4 border border-gray-500"
         >
           <div className="flex justify-center items-center border-b border-gray-500 py-4 mb-2">
             <img
@@ -33,7 +33,7 @@ function settings() {
             />
             <div>
               <h2 className="">{authUser?.userName}</h2>
-              <h3 className="text-xs text-gray-500">{authUser?.phoneNumber}</h3>
+              <h3 className="text-xs text-gray-500">{authUser?.email}</h3>
             </div>
           </div>
           <button className="btn btn-primary" onClick={handleLogout}>

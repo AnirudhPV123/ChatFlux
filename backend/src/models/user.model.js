@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    phoneNumber: {
+    email: {
       type: String,
       required: true,
       unique: true,
@@ -88,4 +88,4 @@ userSchema.methods.generateRefreshToken = async function () {
   );
 };
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model('User', userSchema); 

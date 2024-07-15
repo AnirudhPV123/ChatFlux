@@ -43,7 +43,7 @@ function Login() {
       </h2>
       <Formik
         initialValues={{
-          phoneNumber: "",
+          email: "",
           password: "",
         }}
         validationSchema={loginValidationSchema}
@@ -51,7 +51,7 @@ function Login() {
       >
         {(formikProps) => (
           <Form className="flex flex-col gap-2">
-            <Input type="number" placeholder="PhoneNumber" name="phoneNumber" />
+            <Input type="email" placeholder="Email" name="email" />
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}

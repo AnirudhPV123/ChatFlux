@@ -4,7 +4,7 @@ import { asyncErrorHandler } from '../utils/asyncErrorHandler.js';
 import { CustomError } from '../utils/CustomError.js';
 import { CustomResponse } from '../utils/CustomResponse.js';
 import generateOTP from '../utils/generateOTP.js';
-import sendSMS from '../utils/sendSMS.js';
+import sendEmailVerification from '../utils/sendEmailVerification.js';
 import jwt from 'jsonwebtoken';
 
 // @DESC generate access and refresh token
@@ -21,13 +21,13 @@ const generateAccessAndRefreshToken = asyncErrorHandler(async (userId) => {
   return { accessToken, refreshToken };
 });
 
-// @DESC register user with phone number and send OTP SMS
+// @DESC register user with email and send OTP SMS
 // @METHOD post
 // @PATH /user/register
 export const registerUser = asyncErrorHandler(async (req, res, next) => {
-  const { userName, phoneNumber, password, confirmPassword, gender } = req.body;
+  const { userName, email, password, confirmPassword, gender } = req.body;
 
-  if (!userName || !phoneNumber || !gender || !password || !confirmPassword) {
+  if (!userName || !email || !gender || !password || !confirmPassword) {
     return next(
       new CustomError(
         400,
@@ -40,10 +40,10 @@ export const registerUser = asyncErrorHandler(async (req, res, next) => {
     return next(new CustomError(400, 'Password do not match'));
   }
 
-  const existingUser = await User.findOne({ phoneNumber: phoneNumber });
+  const existingUser = await User.findOne({ email: email });
 
   if (existingUser) {
-    return next(new CustomError(400, 'Phone Number already exit try different'));
+    return next(new CustomError(400, 'Email already exit try different'));
   }
 
   const existingUserName = await User.findOne({ userName });
@@ -60,7 +60,7 @@ export const registerUser = asyncErrorHandler(async (req, res, next) => {
 
   const user = await User.create({
     userName,
-    phoneNumber,
+    email,
     password,
     gender,
     avatar: gender === 'male' ? maleProfilePhoto : femaleProfilePhoto,
@@ -69,25 +69,24 @@ export const registerUser = asyncErrorHandler(async (req, res, next) => {
     otpExpiration,
   });
 
-  const message = `Your OTP for ChatApp verification is: ${otp}`;
-  await sendSMS(phoneNumber, message);
+  await sendEmailVerification(email, otp);
   return res
     .status(201)
     .json(
       new CustomResponse(
         201,
-        'User created successfully. Please check your phone for verification.',
+        'User created successfully. Please check your email for verification.',
       ),
     );
 });
 
-// @DESC verify OTP with either phone number - update user DB(isActive,otp,otpExpiration)
+// @DESC verify OTP with either email - update user DB(isActive,otp,otpExpiration)
 // @METHOD post
 // @PATH /user/verify
 // @RETURN access and refresh token
 export const verifyOTP = asyncErrorHandler(async (req, res, next) => {
-  const { phoneNumber, otp } = req.body;
-  if (!phoneNumber || !otp) {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
     return next(
       new CustomError(
         400,
@@ -96,7 +95,7 @@ export const verifyOTP = asyncErrorHandler(async (req, res, next) => {
     );
   }
 
-  const user = await User.findOne({ phoneNumber });
+  const user = await User.findOne({ email });
 
   if (!user) {
     return next(new CustomError(404, 'User not found'));
@@ -127,26 +126,26 @@ export const verifyOTP = asyncErrorHandler(async (req, res, next) => {
     .json(new CustomResponse(200, { user: updatedUser }, 'User verified successfully'));
 });
 
-// @DESC resend OTP with phone number
+// @DESC resend OTP with email
 // @METHOD post
 // @PATH /user/resend-otp
 export const resendOTP = asyncErrorHandler(async (req, res, next) => {
-  const { phoneNumber } = req.body;
+  const { email } = req.body;
 
-  if (!phoneNumber) {
-    return next(new CustomError(400, 'PhoneNumber must be required.'));
+  if (!email) {
+    return next(new CustomError(400, 'Email must be required.'));
   }
 
-  const existingUser = await User.findOne({ phoneNumber });
+  const existingUser = await User.findOne({ email });
 
   if (existingUser && existingUser.isActive) {
-    return next(new CustomError(400, 'Phone Number already exists'));
+    return next(new CustomError(400, 'Email already exists'));
   }
 
   const { otp, otpExpiration } = generateOTP();
 
   await User.findOneAndUpdate(
-    { phoneNumber },
+    { email },
     {
       $set: {
         otp,
@@ -155,39 +154,39 @@ export const resendOTP = asyncErrorHandler(async (req, res, next) => {
     },
   );
 
-  const message = `Your OTP for ChatApp verification is: ${otp}`;
-  await sendSMS(phoneNumber, message);
+  await sendEmailVerification(email, otp);
+
   return res
     .status(200)
     .json(
       new CustomResponse(
         200,
-        'OTP resent successfully. Please check your phone for the verification code.',
+        'OTP resent successfully. Please check your email for the verification code.',
       ),
     );
 });
 
-// @DESC forgot password with phone number
+// @DESC forgot password with email
 // @METHOD post
 // @PATH /user/forgot-password
 // @UPDATE user DB(isActive,otp,otpExpiration)
 export const forgotPassword = asyncErrorHandler(async (req, res, next) => {
-  const { phoneNumber } = req.body;
+  const { email } = req.body;
 
-  if (!phoneNumber) {
-    return next(new CustomError('PhoneNumber must be required.'));
+  if (!email) {
+    return next(new CustomError('Email must be required.'));
   }
 
-  const existingUser = await User.findOne({ phoneNumber });
+  const existingUser = await User.findOne({ email });
 
   if (!existingUser || !existingUser.isActive) {
-    return next(new CustomError(400, 'Phone Number not exists'));
+    return next(new CustomError(400, 'Email not exists'));
   }
 
   const { otp, otpExpiration } = generateOTP();
 
   await User.findOneAndUpdate(
-    { phoneNumber },
+    { email },
     {
       $set: {
         isActive: false,
@@ -197,31 +196,30 @@ export const forgotPassword = asyncErrorHandler(async (req, res, next) => {
     },
   );
 
-  const message = `Your OTP for ChatApp verification is: ${otp}`;
-  await sendSMS(phoneNumber, message);
+  await sendEmailVerification(email, otp);
   return res
     .status(200)
     .json(
       new CustomResponse(
         200,
-        'Reset password OTP send successfully. Please check your phone for the verification code.',
+        'Reset password OTP send successfully. Please check your email for the verification code.',
       ),
     );
 });
 
-// @DESC reset password with phone number
+// @DESC reset password with email
 // @METHOD post
 // @PATH /user/reset-password
 // @UPDATE user DB(isActive,otp,otpExpiration,password)
 // @RETURN access and refresh token
 export const resetPassword = asyncErrorHandler(async (req, res, next) => {
-  const { phoneNumber, otp, newPassword, confirmPassword } = req.body;
+  const { email, otp, newPassword, confirmPassword } = req.body;
 
-  if (!phoneNumber) {
-    return next(new CustomError(400, 'PhoneNumber must be required'));
+  if (!email) {
+    return next(new CustomError(400, 'Email must be required'));
   }
 
-  const user = await User.findOne({ phoneNumber });
+  const user = await User.findOne({ email });
 
   if (!user) {
     return next(new CustomError(404, 'User not found'));
@@ -267,14 +265,14 @@ export const resetPassword = asyncErrorHandler(async (req, res, next) => {
   res.status(200).json(new CustomResponse(200, 'Password reset successfully'));
 });
 
-// @DESC login with phone number
+// @DESC login with email
 // @METHOD post
 // @PATH /user/login
 // @RETURN access and refresh token
 export const loginUser = asyncErrorHandler(async (req, res, next) => {
-  const { phoneNumber, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!phoneNumber || !password) {
+  if (!email || !password) {
     return next(
       new CustomError(
         400,
@@ -283,10 +281,10 @@ export const loginUser = asyncErrorHandler(async (req, res, next) => {
     );
   }
 
-  const existingUser = await User.findOne({ phoneNumber });
+  const existingUser = await User.findOne({ email });
 
   if (!existingUser || !existingUser.isActive) {
-    return next(new CustomError(400, 'Phone Number not exists'));
+    return next(new CustomError(400, 'Email not exists'));
   }
 
   const isPasswordCorrect = await existingUser.isPasswordCorrect(password);

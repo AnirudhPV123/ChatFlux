@@ -2,9 +2,9 @@ import * as Yup from "yup";
 
 const registerValidationSchema = Yup.object().shape({
   userName: Yup.string().required("FullName is required"),
-  phoneNumber: Yup.string()
-    .matches(/^\d{10}$/, "Phone Number must be 10 digits")
-    .required("Phone Number is required"),
+  email: Yup.string()
+    .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email is not valid")
+    .required("Email is required"),
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
     .matches(
@@ -22,9 +22,9 @@ const registerValidationSchema = Yup.object().shape({
 });
 
 const loginValidationSchema = Yup.object().shape({
-  phoneNumber: Yup.string()
-    .matches(/^\d{10}$/, "Phone Number must be 10 digits")
-    .required("Phone Number is required"),
+  email: Yup.string()
+    .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email is not valid")
+    .required("Email is required"),
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
     .matches(
@@ -37,10 +37,10 @@ const loginValidationSchema = Yup.object().shape({
     .required("Password is required"),
 });
 
-const phoneNumberValidationSchema = Yup.object().shape({
-  phoneNumber: Yup.string()
-    .matches(/^\d{10}$/, "Phone Number must be 10 digits")
-    .required("Phone Number is required"),
+const emailValidationSchema = Yup.object().shape({
+  email: Yup.string()
+    .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email is not valid")
+    .required("Email is required"),
 });
 
 const passwordAndConfirmPasswordValidation = Yup.object().shape({
@@ -62,6 +62,6 @@ const passwordAndConfirmPasswordValidation = Yup.object().shape({
 export {
   registerValidationSchema,
   loginValidationSchema,
-  phoneNumberValidationSchema,
+  emailValidationSchema,
   passwordAndConfirmPasswordValidation,
 };

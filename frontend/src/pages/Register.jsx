@@ -33,7 +33,7 @@ function Register() {
         }
         const res = await verifyOTP({
           otp: otpNumber,
-          phoneNumber: values.phoneNumber,
+          email: values.email,
         });
         toast.success("User verified Successfully");
         dispatch(setAuthUser(res.data.data.user));
@@ -52,10 +52,10 @@ function Register() {
   };
 
   // Handle OTP resend
-  const handleResendOTP = async (phoneNumber) => {
+  const handleResendOTP = async (email) => {
     setLoading(true);
     try {
-      await resendOTP(phoneNumber);
+      await resendOTP(email);
       toast.success("New OTP generated Successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to resend OTP");
@@ -74,7 +74,7 @@ function Register() {
       <Formik
         initialValues={{
           userName: "",
-          phoneNumber: "",
+          email: "",
           otp: ["", "", "", "", "", ""],
           password: "",
           confirmPassword: "",
@@ -89,11 +89,7 @@ function Register() {
             {step === 1 && (
               <>
                 <Input type="text" placeholder="UserName" name="userName" />
-                <Input
-                  type="number"
-                  placeholder="PhoneNumber"
-                  name="phoneNumber"
-                />
+                <Input type="email" placeholder="Email" name="email" />
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
@@ -140,16 +136,14 @@ function Register() {
                   <button
                     type="button"
                     className="font-semibold"
-                    onClick={() =>
-                      handleResendOTP(formikProps.values.phoneNumber)
-                    }
+                    onClick={() => handleResendOTP(formikProps.values.email)}
                     disabled={loading}
                   >
                     Get a new code
                   </button>
                   <h5 className="text-sm">
-                    We sent a 6-digit code to +91
-                    {formikProps.values.phoneNumber}
+                    We sent a 6-digit code to
+                    {formikProps.values.email}
                   </h5>
                 </div>
               </>

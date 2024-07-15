@@ -8,7 +8,7 @@ import {
   resendOTP,
 } from "../api/user";
 import {
-  phoneNumberValidationSchema,
+  emailValidationSchema,
   passwordAndConfirmPasswordValidation,
 } from "../validationSchema/schema";
 import OTPInput from "../components/OTPInput";
@@ -36,7 +36,7 @@ function ForgotPassword() {
         }
         await resetPasswordVerifyOTP({
           otp: otpNumber,
-          phoneNumber: values.phoneNumber,
+          email: values.email,
         });
         toast.success("User verified successfully");
         setStep(3);
@@ -46,7 +46,7 @@ function ForgotPassword() {
         resetForm();
         navigate("/");
       } else {
-        await forgotPassword({ phoneNumber: values.phoneNumber });
+        await forgotPassword({ email: values.email });
         toast.success("OTP generated successfully");
         setStep(2);
       }
@@ -60,10 +60,10 @@ function ForgotPassword() {
     }
   };
 
-  const handleResendOTP = async (phoneNumber) => {
+  const handleResendOTP = async (email) => {
     setLoading(true);
     try {
-      await resendOTP(phoneNumber);
+      await resendOTP(email);
       toast.success("New OTP generated successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to resend OTP");
@@ -75,7 +75,7 @@ function ForgotPassword() {
   const getValidationSchema = () => {
     switch (step) {
       case 1:
-        return phoneNumberValidationSchema;
+        return emailValidationSchema;
       case 3:
         return passwordAndConfirmPasswordValidation;
       default:
@@ -96,7 +96,7 @@ function ForgotPassword() {
       </h2>
       <Formik
         initialValues={{
-          phoneNumber: "",
+          email: "",
           otp: ["", "", "", "", "", ""],
           newPassword: "",
           confirmPassword: "",
@@ -106,13 +106,9 @@ function ForgotPassword() {
       >
         {(formikProps) => (
           <Form className="flex flex-col gap-2">
-            {/* step 1 - Display phoneNumber filed */}
+            {/* step 1 - Display Email filed */}
             {step === 1 && (
-              <Input
-                type="number"
-                placeholder="Phone Number"
-                name="phoneNumber"
-              />
+              <Input type="email" placeholder="Email" name="email" />
             )}
 
             {/* step 2 - Display OTP validation */}
@@ -129,16 +125,14 @@ function ForgotPassword() {
                   <button
                     type="button"
                     className="font-semibold"
-                    onClick={() =>
-                      handleResendOTP(formikProps.values.phoneNumber)
-                    }
+                    onClick={() => handleResendOTP(formikProps.values.email)}
                     disabled={loading}
                   >
                     Get a new code
                   </button>
                   <h5 className="text-sm">
-                    We sent a 6-digit code to +91
-                    {formikProps.values.phoneNumber}
+                    We sent a 6-digit code to
+                    {formikProps.values.email}
                   </h5>
                 </div>
               </>

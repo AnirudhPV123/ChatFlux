@@ -10,7 +10,7 @@ const apiClient = axios.create({
 const registerUser = async (values) => {
   const data = {
     userName: values.userName,
-    phoneNumber: "+91" + values.phoneNumber.toString(),
+    email: values.email,
     otp: values.otp,
     password: values.password,
     confirmPassword: values.confirmPassword,
@@ -19,9 +19,9 @@ const registerUser = async (values) => {
   return await apiClient.post("/api/v1/users/register", data);
 };
 
-const verifyOTP = async ({ otp, phoneNumber }) => {
+const verifyOTP = async ({ otp, email }) => {
   const data = {
-    phoneNumber: "+91" + phoneNumber.toString(),
+    email: email.toString(),
     otp,
   };
   return await apiClient.post("/api/v1/users/verify", data);
@@ -29,7 +29,7 @@ const verifyOTP = async ({ otp, phoneNumber }) => {
 
 const loginUser = async (values) => {
   const data = {
-    phoneNumber: "+91" + values.phoneNumber.toString(),
+    email: values.email.toString(),
     password: values.password,
   };
   return await apiClient.post("/api/v1/users/login", data);
@@ -39,20 +39,20 @@ const logoutUser = async () => {
   return await apiClient.get("/api/v1/users/logout");
 };
 
-const forgotPassword = async ({ phoneNumber }) => {
+const forgotPassword = async ({ email }) => {
   console.log("forgot");
-  const data = { phoneNumber: "+91" + phoneNumber.toString() };
+  const data = { email};
   return await apiClient.post("/api/v1/users/forgot-password", data);
 };
 
-const resetPasswordVerifyOTP = async ({ phoneNumber, otp }) => {
-  const data = { phoneNumber: "+91" + phoneNumber.toString(), otp };
+const resetPasswordVerifyOTP = async ({ email, otp }) => {
+  const data = { email, otp };
   return await apiClient.post("/api/v1/users/reset-password", data);
 };
 
 const resetPasswordNewPassword = async (values) => {
   const data = {
-    phoneNumber: "+91" + values.phoneNumber.toString(),
+    email:   values.email.toString(),
     newPassword: values.newPassword,
     confirmPassword: values.confirmPassword,
   };
@@ -60,10 +60,10 @@ const resetPasswordNewPassword = async (values) => {
   return await apiClient.post("/api/v1/users/reset-password", data);
 };
 
-const resendOTP = async (phoneNumber) => {
-  console.log("phon :", phoneNumber);
+const resendOTP = async (email) => {
+  console.log("phon :", email);
   const data = {
-    phoneNumber: "+91" + phoneNumber.toString(),
+    email:  email.toString(),
   };
   console.log(data);
   return await apiClient.post("/api/v1/users/resend-otp", data);
