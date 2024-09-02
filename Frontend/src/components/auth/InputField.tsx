@@ -1,46 +1,49 @@
-import { InitialValues } from "./types";
 import { FormikProps } from "formik";
-import React from "react";
 
-type InputFieldProps = {
+type InputFieldProps<T> = {
   type: string;
-  name: keyof InitialValues;
+  name: keyof T;
   placeholder: string;
-  formik: FormikProps<InitialValues>;
+  formik: FormikProps<T>;
 };
 
-const InputField = React.memo(
-  ({ type, name, placeholder, formik }: InputFieldProps) => {
-    const { errors, touched, values, handleChange, handleBlur } = formik;
-    const error = errors[name] as string | undefined;
-    const isTouched = touched[name] as boolean | undefined;
-    const value = values[name] || "";
+function InputField<T>({
+  type,
+  name,
+  placeholder,
+  formik,
+}: InputFieldProps<T>) {
+  const { errors, touched, values, handleChange, handleBlur } = formik;
+  const error = errors[name] as string | undefined;
+  const isTouched = touched[name] as boolean | undefined;
+  const value = values[name] || "";
 
-    const inputBoxAttributes = {
-      placeholder,
-      type,
-      id: name,
-      name,
-      onChange: handleChange,
-      onBlur: handleBlur,
-      value: value,
-    };
+  const stringName = String(name);
 
-    return (
-      <>
-        <input
-          className={`input input-bordered w-full ${
-            error && isTouched && "border-red-600"
-          }`}
-          {...inputBoxAttributes}
-          autoComplete={name}
-        />
-        {error && isTouched && (
-          <div className="mt-[-6px] text-xs text-red-600">{error}</div>
-        )}
-      </>
-    );
-  },
-);
+  const inputBoxAttributes: React.InputHTMLAttributes<HTMLInputElement> = {
+    placeholder,
+    type,
+    id: stringName,
+    name: stringName,
+    onChange: handleChange,
+    onBlur: handleBlur,
+    value: value as string,
+  };
+
+  return (
+    <>
+      <input
+        className={`input input-bordered w-full ${
+          error && isTouched ? "border-red-600" : null
+        }`}
+        {...inputBoxAttributes}
+        autoComplete={stringName}
+      />
+      {error && isTouched ? (
+        <div className="mt-[-6px] text-xs text-red-600">{error}</div>
+      ) : null}
+    </>
+  );
+}
 
 export default InputField;

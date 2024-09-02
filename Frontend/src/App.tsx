@@ -7,6 +7,7 @@ import {
   RouterProvider,
   RouteObject,
 } from "react-router-dom";
+import SignupPage from "./pages/SignupPage";
 
 // Define a type for your routes
 type AppRoute = RouteObject & {
@@ -16,6 +17,7 @@ type AppRoute = RouteObject & {
 function App() {
   const routes: AppRoute[] = [
     { path: "/login", element: <LoginPage />, authentication: false },
+    { path: "signup", element: <SignupPage />, authentication: false },
   ];
 
   const queryClient = new QueryClient();

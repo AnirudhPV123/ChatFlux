@@ -4,4 +4,8 @@ const loginUser = async (values) => {
   return await apiClient.post("/api/v1/users/login",values);
 };
 
-export { loginUser };
+const signupUser = async (values) => {
+  return await apiClient.post("/api/v1/users/login", values);
+};
+
+export { loginUser,signupUser };

@@ -31,4 +31,11 @@ const loginValidationSchema = Yup.object().shape({
   password,
 });
 
-export { signUpValidationSchema, loginValidationSchema };
+const otpValidationSchema = Yup.object({
+  otp: Yup.array()
+    .of(Yup.string().length(1, "Invalid OTP digit"))
+    .length(6, "OTP must be 6 digits long")
+    .required("OTP is required"),
+});
+
+export { signUpValidationSchema, loginValidationSchema, otpValidationSchema };

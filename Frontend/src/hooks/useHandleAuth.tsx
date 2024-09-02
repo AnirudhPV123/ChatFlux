@@ -1,13 +1,7 @@
-import { InitialValues } from "@/components/auth/types";
-import { loginUser } from "@/services/api/auth";
 import { FormikErrors, FormikHelpers } from "formik";
-// import { useTypedDispatch } from "@/hooks/useRedux";
-// import { setUserSlice } from "@/redux/userSlice";
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
-
-interface CustomFormikErrors extends FormikErrors<InitialValues> {
-  server?: string;
-}
+import { useState } from "react";
+import { loginUser, signupUser } from "@/services/api/auth";
 
 interface CustomError extends Error {
   response?: {
@@ -17,7 +11,7 @@ interface CustomError extends Error {
   };
 }
 
-interface ResponseValues extends InitialValues {
+interface ResponseValues {
   createdAt: string;
   updatedAt: string;
   username: string;
@@ -25,46 +19,50 @@ interface ResponseValues extends InitialValues {
   _id: string;
 }
 
-interface LoginResponse {
+type AuthResponse = {
   data: {
     data: ResponseValues;
   };
-}
+};
 
-type LoginMutation = UseMutationResult<LoginResponse, Error, InitialValues>;
+// Generalize the mutation result
+type AuthMutation<T> = UseMutationResult<AuthResponse, Error, T>;
 
-function useHandleAuth({ authType }: { authType: "login" | "signup" }) {
-  // const dispatch = useTypedDispatch();
+function useHandleAuth<T >({ authType }: { authType: "login" | "signup" }) {
+  const [step, setStep] = useState(1);
 
-  const mutation: LoginMutation = useMutation({
-    mutationFn: loginUser,
+  const mutation: AuthMutation<T> = useMutation({
+    mutationFn: authType === "login" ? loginUser : signupUser,
     mutationKey: ["authUser"],
   });
 
   const handleAuth = async (
-    values: InitialValues,
-    { resetForm, setErrors }: FormikHelpers<InitialValues>,
+    values: T,
+    { resetForm, setErrors }: FormikHelpers<T>,
   ) => {
-    if (authType === "login") {
-      try {
-        const res = await mutation.mutateAsync(values);
-        const data: ResponseValues = res.data.data;
-        // dispatch(setUserSlice(data));
+    try {
+      const res = await mutation.mutateAsync(values);
+      // Handle the response based on authType
+      if (authType === "login") {
+        const data: ResponseValues = (res as AuthResponse).data.data;
         console.log(data);
-
-        resetForm();
-      } catch (error) {
-        const customError = error as CustomError;
-        setErrors({
-          server:
-            customError.response?.data?.message ||
-            "An error occurred while attempting to login",
-        } as CustomFormikErrors);
+        setStep(2); // Go to OTP input page if login is successful
+      } else {
+        // Handle signup response
+        console.log("Signup successful");
       }
+      resetForm();
+    } catch (error) {
+      const customError = error as CustomError;
+      setErrors({
+        server:
+          customError.response?.data?.message ||
+          "An error occurred while attempting to authenticate",
+      } as FormikErrors<T>);
     }
   };
 
-  return { handleAuth, isLoading: mutation.isPending };
+  return { handleAuth, isLoading: mutation.isPending, step };
 }
 
 export default useHandleAuth;
