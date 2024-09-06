@@ -6,6 +6,8 @@ export interface UserType extends Document {
   username: string;
   email: string;
   password: string;
+  dateOfBirth: Date;
+  gender: string;
   refreshToken?: string;
 
   generateAccessToken(): string;
@@ -32,6 +34,15 @@ const userSchema = new Schema<UserType>(
     password: {
       type: String,
       required: true,
+    },
+    dateOfBirth: {
+      type: Date,
+      required: true,
+    },
+    gender: {
+      type: String,
+      required: true,
+      enum: ['male', 'female', 'other'],
     },
     refreshToken: {
       type: String,

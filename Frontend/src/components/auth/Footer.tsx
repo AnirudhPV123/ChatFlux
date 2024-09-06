@@ -5,21 +5,26 @@ type FooterProps = {
   message: string;
   link: string;
   url: string;
+  authType: "login" | "signup";
 };
 
-const Footer: React.FC<FooterProps> = ({ message, link, url }) => {
+const Footer: React.FC<FooterProps> = ({ message, link, url, authType }) => {
   return (
     <>
-      <Link
-        className="mt-2 text-center text-sm font-semibold underline"
-        to="/forgot-password"
-      >
-        Forgot your password?
-      </Link>
-      <hr className="border-1 my-4 border-primary opacity-50 shadow-2xl" />
+      {authType === "login" && (
+        <Link
+          className="mt-2 text-center text-sm font-semibold underline"
+          to="/forgot-password"
+        >
+          Forgot your password?
+        </Link>
+      )}
+
+      <div className="divider" />
+
       <Link className="text-center text-sm" to={url}>
-        {message}
-        <span className="font-semibold underline">{link}</span>
+        {message}&nbsp;
+        <span className="font-semibold text-white underline">{link}</span>
       </Link>
     </>
   );

@@ -7,7 +7,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ children }) => {
   return (
-    <h2 className="mx-auto mb-4 flex items-center gap-2 text-2xl font-semibold">
+    <h2 className="mx-auto mb-8 flex items-center gap-2 text-2xl font-bold text-white">
       {children} <Lock />
     </h2>
   );

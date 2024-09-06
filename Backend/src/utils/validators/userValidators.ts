@@ -2,25 +2,49 @@ import Joi from 'joi';
 
 const email = Joi.string().email().required();
 const password = Joi.string()
-  .min(6)
-  .regex(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).*$/) // regex for uppercase, lowercase, number, and special character
+  .min(8)
+  .message('Password must be at least 8 characters')
+  .pattern(/[0-9!@#$%^&*(),.?":{}|<>]/)
+  .message('Password must contain at least one number or symbol')
+  .pattern(/[a-zA-Z]/)
+  .message('Password must contain at least one letter')
   .required()
   .messages({
-    'string.min': 'Password must be at least 6 characters long',
-    'string.pattern.base':
-      'Password must contain at least one uppercase letter, one number, and one special character',
     'any.required': 'Password is required',
   });
 
-const registerValidatorSchema = Joi.object({
-  username: Joi.string().min(3).required(),
+  // const password = Yup.string()
+  //   .min(8, 'Password must be at least 8 characters')
+  //   .matches(/[0-9!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one number or symbol')
+  //   .matches(/[a-zA-Z]/, 'Password must contain at least one letter')
+  //   .required('Password is required');
+
+const signUpGenerateOtpValidator = Joi.object({
+  username: Joi.string().min(4).required(),
+  email,
+  password,
+  dateOfBirth: Joi.date().iso().required(),
+  gender: Joi.string().valid('male', 'female', 'other').required(),
+});
+
+const emailAndPasswordValidator = Joi.object({
   email,
   password,
 });
 
-const loginValidatorSchema = Joi.object({
+const emailAndOtpValidator = Joi.object({
   email,
-  password,
+  otp: Joi.string().length(6).required(),
 });
 
-export { registerValidatorSchema, loginValidatorSchema };
+const forgotPasswordGenerateOtpValidator = Joi.object({
+  email,
+});
+
+
+export {
+  emailAndPasswordValidator,
+  signUpGenerateOtpValidator,
+  emailAndOtpValidator,
+  forgotPasswordGenerateOtpValidator,
+};

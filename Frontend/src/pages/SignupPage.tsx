@@ -1,12 +1,10 @@
 import AuthPageLayout from "@/layout/AuthPageLayout";
-import {Header,SignupForm,Footer} from "@/components/auth/index";
+import { SignupForm } from "@/components/auth/forms";
 
 function SignupPage() {
   return (
     <AuthPageLayout>
-      <Header>Login</Header>
       <SignupForm />
-      <Footer message="Already have an account?" link="Login" url="login" />
     </AuthPageLayout>
   );
 }

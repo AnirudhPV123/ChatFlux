@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import PageLayout from "./layout/PageLayout";
 import ProtectedRoute from "./layout/ProtectedRoute";
-import LoginPage from "./pages/LoginPage";
+import { LoginPage, SignupPage, ForgotPasswordPage } from "@/pages";
+import "@/assets/styles/global.css";
+
 import {
   createBrowserRouter,
   RouterProvider,
   RouteObject,
 } from "react-router-dom";
-import SignupPage from "./pages/SignupPage";
 
 // Define a type for your routes
 type AppRoute = RouteObject & {
@@ -18,6 +19,11 @@ function App() {
   const routes: AppRoute[] = [
     { path: "/login", element: <LoginPage />, authentication: false },
     { path: "signup", element: <SignupPage />, authentication: false },
+    {
+      path: "/forgot-password",
+      element: <ForgotPasswordPage />,
+      authentication: false,
+    },
   ];
 
   const queryClient = new QueryClient();

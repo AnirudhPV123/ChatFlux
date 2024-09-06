@@ -1,47 +1,44 @@
-import { FormikProps } from "formik";
+import useFormikFormField from "@/hooks/useFormikFormField";
 
 type InputFieldProps<T> = {
   type: string;
   name: keyof T;
   placeholder: string;
-  formik: FormikProps<T>;
+  isErrorNeeded?: boolean;
+  label: string;
 };
 
 function InputField<T>({
   type,
   name,
   placeholder,
-  formik,
+  label,
+  isErrorNeeded = true,
 }: InputFieldProps<T>) {
-  const { errors, touched, values, handleChange, handleBlur } = formik;
-  const error = errors[name] as string | undefined;
-  const isTouched = touched[name] as boolean | undefined;
-  const value = values[name] || "";
-
   const stringName = String(name);
-
-  const inputBoxAttributes: React.InputHTMLAttributes<HTMLInputElement> = {
-    placeholder,
-    type,
-    id: stringName,
-    name: stringName,
-    onChange: handleChange,
-    onBlur: handleBlur,
-    value: value as string,
-  };
+  const { error, isTouched, value, handleChange, handleBlur } =
+    useFormikFormField(stringName);
 
   return (
     <>
+      <label className="label-text mt-2 font-semibold text-gray-300">
+        {label}
+      </label>
       <input
         className={`input input-bordered w-full ${
-          error && isTouched ? "border-red-600" : null
+          error && isTouched && "border-red-600"
         }`}
-        {...inputBoxAttributes}
-        autoComplete={stringName}
+        placeholder={placeholder}
+        type={type}
+        id={stringName}
+        name={stringName}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        value={value as string}
       />
-      {error && isTouched ? (
-        <div className="mt-[-6px] text-xs text-red-600">{error}</div>
-      ) : null}
+      {isErrorNeeded && error && isTouched && (
+        <div className="mt-[-4px] text-xs text-red-600">{error}</div>
+      )}
     </>
   );
 }

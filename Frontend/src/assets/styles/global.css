@@ -1,0 +1,15 @@
+/* check box style to normal when disabled */
+.checkbox-primary:disabled {
+  opacity: 1 !important;
+}
+
+/* Hide number input spinners for modern browsers */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none; /* Safari and Chrome */
+  margin: 0;
+}

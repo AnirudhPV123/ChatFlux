@@ -1,15 +1,43 @@
-import React, { useRef } from "react";
+import { useFormikContext } from "@/context/FormikContext";
 
-function OTPInput() {
-  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+type UseOtpFormProps = {
+  inputsRef: React.MutableRefObject<(HTMLInputElement | null)[]>;
+};
 
+function useOtpForm({ inputsRef }: UseOtpFormProps) {
+  const { values, setFieldValue } = useFormikContext();
+
+  //   custom function to update formik otp field
+  const updateOtpFormikField = ({
+    index,
+    value,
+  }: {
+    index: number;
+    value: string;
+  }) => {
+    const otp = values.otp;
+    if (otp === null) {
+      setFieldValue(`otp`, Number(value));
+    }
+    if (otp !== null) {
+      const otpArray = otp.toString().split("");
+      otpArray[index] = value;
+      setFieldValue(`otp`, otpArray.join(""));
+    }
+  };
+
+  // Otp input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, maxLength, nextElementSibling } = e.target;
-
     // Only allow numeric input
     if (/[^0-9]/.test(value)) {
       e.target.value = value.replace(/[^0-9]/g, "");
+      return;
     }
+
+    // formik update
+    const index = inputsRef.current.indexOf(e.target as HTMLInputElement);
+    updateOtpFormikField({ index, value });
 
     // Move to the next input field when the current one is filled
     if (value.length === maxLength && nextElementSibling) {
@@ -17,11 +45,11 @@ function OTPInput() {
     }
   };
 
+  //   input key events (backspace,left,right)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const { key, target } = e;
     const currentIndex = inputsRef.current.indexOf(target as HTMLInputElement);
     const currentInput = inputsRef.current[currentIndex];
-
     // Handle backspace
     if (key === "Backspace") {
       e.preventDefault(); // Prevent default backspace behavior
@@ -30,14 +58,16 @@ function OTPInput() {
         if (prevInput) {
           prevInput.focus();
           prevInput.value = ""; // Clear the value of the previous input if needed
+          updateOtpFormikField({ index: currentIndex - 1, value: "" });
         }
       }
       // Clear the current input field if it's not empty (used for last box)
       if (currentInput && currentInput.value.length > 0) {
         currentInput.value = "";
+
+        updateOtpFormikField({ index: currentIndex, value: "" });
       }
     }
-
     // Handle arrow keys
     if (key === "ArrowLeft" && currentIndex > 0) {
       const prevInput = inputsRef.current[currentIndex - 1];
@@ -61,21 +91,7 @@ function OTPInput() {
     }
   };
 
-  return (
-    <div className="flex gap-2">
-      {[...Array(6)].map((_, index) => (
-        <input
-          key={index}
-          type="text"
-          maxLength={1}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          ref={(el) => (inputsRef.current[index] = el)}
-          className="h-12 w-12 rounded-lg border border-gray-700 bg-gray-800 text-center text-xl text-white caret-transparent outline-none focus:border-purple-500"
-        />
-      ))}
-    </div>
-  );
+  return { handleInputChange, handleKeyDown };
 }
 
-export default OTPInput;
+export default useOtpForm;
