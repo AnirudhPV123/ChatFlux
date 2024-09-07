@@ -1,4 +1,5 @@
 import { useFormikContext } from "@/context/FormikContext";
+import { FormikValues } from "formik";
 
 type UseOtpFormProps = {
   inputsRef: React.MutableRefObject<(HTMLInputElement | null)[]>;
@@ -15,7 +16,7 @@ function useOtpForm({ inputsRef }: UseOtpFormProps) {
     index: number;
     value: string;
   }) => {
-    const otp = values.otp;
+    const { otp } = values as FormikValues;
     if (otp === null) {
       setFieldValue(`otp`, Number(value));
     }

@@ -1,38 +1,22 @@
-import { useFormik } from "formik";
-import { loginValidationSchema } from "@/validators/authValidatorSchema";
-
-import {
-  CustomFormikErrors,
-  LoginInitialValues,
-  UseHandleAuth,
-} from "../types";
+import { FC, memo } from "react";
+import { LoginInitialValues, UseHandleAuth } from "../types";
 import { CustomError, Button, InputField } from "../";
-import { FormikProvider} from "@/context/FormikContext";
+import { FormikProvider } from "@/context/FormikContext";
 import useHandleLogin from "@/hooks/useHandleLogin";
 import PasswordField from "../PasswordField";
+import useLoginFormik from "@/hooks/useLoginFormik";
 
-const initialValues: LoginInitialValues = {
-  email: "",
-  password: "",
-};
-
-function LoginForm() {
+const LoginForm: FC = () => {
   const { handleAuth, isLoading }: UseHandleAuth<LoginInitialValues> =
     useHandleLogin();
 
-  const formik = useFormik<LoginInitialValues>({
-    initialValues,
-    validationSchema: loginValidationSchema,
-    onSubmit: handleAuth,
-  });
-
-  const errors: CustomFormikErrors<LoginInitialValues> = formik.errors;
+  const { handleSubmit, errors, ...formik } = useLoginFormik(handleAuth);
 
   return (
-    <FormikProvider formik={formik}>
+    <FormikProvider formik={{ handleSubmit, errors, ...formik }}>
       {errors?.server && <CustomError message={errors.server} />}
       <form
-        onSubmit={formik.handleSubmit}
+        onSubmit={handleSubmit}
         noValidate
         className="flex w-full flex-col gap-2"
       >
@@ -48,6 +32,6 @@ function LoginForm() {
       </form>
     </FormikProvider>
   );
-}
+};
 
-export default LoginForm;
+export default memo(LoginForm);

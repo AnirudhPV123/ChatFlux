@@ -1,5 +1,6 @@
 import { gender } from "@/constants/gener";
 import useFormikFormField from "@/hooks/useFormikFormField";
+import { memo } from "react";
 
 function Gender() {
   const {
@@ -35,4 +36,5 @@ function Gender() {
   );
 }
 
-export default Gender;
+const MemoizedGender = memo(Gender);
+export default MemoizedGender;

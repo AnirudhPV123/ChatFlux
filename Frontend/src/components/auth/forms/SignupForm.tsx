@@ -1,48 +1,20 @@
-import {
-  CustomFormikErrors,
-  SignUpInitialValues,
-  UseHandleAuth,
-} from "../types";
-import { useFormik } from "formik";
+import { SignUpInitialValues, UseHandleAuth } from "../types";
 import { CustomError, Button, Header, Footer } from "../";
-import {
-  EmailForm,
-  PasswordForm,
-  OtpForm,
-  SocialLoginForm,
-  DetailsForm,
-} from "./";
 import { FormikProvider } from "@/context/FormikContext";
 import { useMultistepForm } from "@/hooks/useMultistepForm";
 import { AuthProgress } from "../";
-import { getSignupValidationSchema } from "@/utils/getSignupValidationSchema";
 import useHandleSignup from "@/hooks/useHandleSignup";
-
-type UseMultistepForm = {
-  currentStepIndex: number;
-  next: () => void;
-  back: () => void;
-  totalSteps: number;
-  isFirstStep: boolean;
-  isLastStep: boolean;
-  isSecondLastStep: boolean;
-  step: React.ReactNode;
-};
-
-const initialValues: SignUpInitialValues = {
-  username: "",
-  email: "",
-  password: "",
-  otp: null,
-  dateOfBirth: {
-    year: "",
-    month: "",
-    day: "",
-  },
-  gender: "",
-};
+import {
+  OtpForm,
+  EmailForm,
+  PasswordForm,
+  DetailsForm,
+  SocialLoginForm,
+} from "./";
+import useSignupFormik from "@/hooks/useSignupFormik";
 
 function SignupForm() {
+  // Mange multi-step form state and logic
   const {
     step,
     next,
@@ -52,52 +24,55 @@ function SignupForm() {
     totalSteps,
     isSecondLastStep,
     back,
-  }: UseMultistepForm = useMultistepForm([
+  } = useMultistepForm([
     <EmailForm />,
     <PasswordForm />,
     <DetailsForm />,
     <OtpForm />,
   ]);
 
+  // Handle signup logic and loading state
   const { handleAuth, isLoading }: UseHandleAuth<SignUpInitialValues> =
-    useHandleSignup({ next, isLastStep });
+    useHandleSignup({ isLastStep, next });
 
-  const formik = useFormik<SignUpInitialValues>({
-    initialValues,
-    validationSchema: getSignupValidationSchema(currentStepIndex),
-    onSubmit: (values, { setTouched, ...rest }) => {
-      if (isLastStep || isSecondLastStep) {
-        handleAuth(values, { setTouched, ...rest });
-      } else {
-        next();
-      }
-      setTouched({});
-    },
+  // Handle formik logic
+  const { handleSubmit, errors, ...formik } = useSignupFormik({
+    currentStepIndex,
+    handleAuth,
+    isLastStep,
+    isSecondLastStep,
+    next,
   });
 
-  const errors: CustomFormikErrors<SignUpInitialValues> = formik.errors;
-
   return (
-    <FormikProvider formik={formik}>
+    <FormikProvider formik={{ handleSubmit, errors, ...formik }}>
       {isFirstStep && <Header>Sign up</Header>}
+
+      {/* Top progress bar and steps */}
       <AuthProgress
+        flowType="signup"
         currentStepIndex={currentStepIndex}
         totalSteps={totalSteps}
         isFirstStep={isFirstStep}
         isLastStep={isLastStep}
         back={back}
       />
+
+      {/* Server error */}
       {errors?.server ? <CustomError message={errors.server} /> : null}
+
       <form
-        onSubmit={formik.handleSubmit}
+        onSubmit={handleSubmit}
         noValidate
         className="flex w-full flex-col gap-2"
       >
+        {/* Step form */}
         {step}
         <Button isLoading={isLoading}>{isLastStep ? "Verify" : "Next"}</Button>
       </form>
 
       {isFirstStep && <SocialLoginForm />}
+
       {isFirstStep && (
         <Footer
           authType="signup"

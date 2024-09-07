@@ -1,12 +1,20 @@
 import { months } from "@/constants/months";
 import useFormikFormField from "@/hooks/useFormikFormField";
+import { FC, memo } from "react";
 
 interface DateOfBirthValue {
-  year: string;
-  day: string;
-  month: string;
+  year?: string;
+  day?: string;
+  month?: string;
 }
-function DateOfBirth() {
+
+interface DateOfBirthErrors {
+  year?: string;
+  month?: string;
+  day?: string;
+}
+
+const DateOfBirth: FC = () => {
   const { error, isTouched, value, handleBlur, handleChange } =
     useFormikFormField("dateOfBirth");
 
@@ -17,7 +25,7 @@ function DateOfBirth() {
   let errorDay;
 
   if (error !== undefined) {
-    const { day, month, year } = error as unknown as DateOfBirthValue;
+    const { day, month, year } = error as unknown as DateOfBirthErrors;
     errorYear = year;
     errorDay = day;
     errorMonth = month;
@@ -66,8 +74,7 @@ function DateOfBirth() {
         </select>
         <input
           value={day}
-          type="text"
-          maxLength={2}
+          type="number"
           name="dateOfBirth.day"
           placeholder="DD"
           className={`input input-bordered w-1/4 ${errorDay && isTouched && "border-error"}`}
@@ -80,6 +87,7 @@ function DateOfBirth() {
       </div>
     </>
   );
-}
+};
 
-export default DateOfBirth;
+const MemoizedDateOfBirth = memo(DateOfBirth);
+export default MemoizedDateOfBirth;

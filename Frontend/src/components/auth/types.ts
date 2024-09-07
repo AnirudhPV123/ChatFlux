@@ -15,6 +15,13 @@ export type SignUpInitialValues = {
   otp: null | string;
 };
 
+export type ForgotPasswordInitialValues = {
+  email: string;
+  otp: null | string;
+  password: string;
+  confirmPassword: string;
+};
+
 export type UseHandleAuth<T> = {
   handleAuth: (
     values: T,

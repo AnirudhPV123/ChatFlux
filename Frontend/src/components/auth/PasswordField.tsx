@@ -1,21 +1,40 @@
 import useFormikFormField from "@/hooks/useFormikFormField";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 
-function PasswordField() {
+function PasswordField({
+  label="Password" ,
+  passwordType = "password",
+  placeholder = "Password",
+}: {
+  label?: string;
+  passwordType?: string;
+  placeholder?: string;
+}) {
+
+  console.log("PasswordField",label);
+  
   const [isPasswordShow, setIsPasswordShow] = useState(false);
   const { error, isTouched, value, handleChange, handleBlur } =
-    useFormikFormField("password");
+    useFormikFormField(passwordType);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setIsPasswordShow((prev) => !prev);
+  }, []);
+
   return (
     <>
+      {/* Label */}
       <label className="label-text mt-2 font-semibold text-gray-300">
-        Password
+        {label}
       </label>
+
       <div className="relative">
+        {/* Input field */}
         <input
           type={isPasswordShow ? "text" : "password"}
-          name="password"
-          placeholder="Password"
+          name={passwordType}
+          placeholder={placeholder}
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -23,16 +42,25 @@ function PasswordField() {
             error && isTouched && "border-red-600"
           }`}
         />
+
+        {/* Toggle password visibility button */}
         <button
           type="button"
           className="btn absolute right-2 border-none bg-transparent hover:bg-transparent"
-          onClick={() => setIsPasswordShow((prev) => !prev)}
+          onClick={togglePasswordVisibility}
+          aria-label={isPasswordShow ? "Hide password" : "Show password"}
         >
           {isPasswordShow ? <Eye /> : <EyeOff />}
         </button>
+
+        {/* Error message */}
+        {error && isTouched && (
+          <div className="mt-1 text-xs text-red-600">{error}</div>
+        )}
       </div>
     </>
   );
 }
 
-export default PasswordField;
+const MemoizedInputField = memo(PasswordField);
+export default MemoizedInputField;

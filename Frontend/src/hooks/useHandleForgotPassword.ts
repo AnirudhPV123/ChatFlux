@@ -1,6 +1,10 @@
 import { AppDispatch } from "@/redux/store";
 import { setUserSlice, UserType } from "@/redux/userSlice";
-import { signupUser, signupVerifyOtp } from "@/services/api/auth";
+import {
+  forgotPasswordVerifyEmail,
+  forgotPasswordVerifyOtp,
+  resetPassword,
+} from "@/services/api/auth";
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import { FormikErrors, FormikHelpers } from "formik";
 import { useDispatch } from "react-redux";
@@ -21,17 +25,22 @@ type AuthResponse = {
 
 type AuthMutation<T> = UseMutationResult<AuthResponse, Error, T>;
 
-function useHandleSignup<T>({
-  isLastStep,
+function useHandleForgotPassword<T>({
+  currentStepIndex,
   next,
 }: {
-  isLastStep: boolean;
   next: () => void;
+  currentStepIndex: number;
 }) {
   const dispatch: AppDispatch = useDispatch();
 
   const mutation: AuthMutation<T> = useMutation({
-    mutationFn: isLastStep ? signupVerifyOtp : signupUser,
+    mutationFn:
+      currentStepIndex === 1
+        ? forgotPasswordVerifyEmail
+        : currentStepIndex === 2
+          ? forgotPasswordVerifyOtp
+          : resetPassword,
     mutationKey: ["authUser"],
   });
 
@@ -40,14 +49,17 @@ function useHandleSignup<T>({
     { setErrors, resetForm }: FormikHelpers<T>,
   ) => {
     try {
-      if (isLastStep) {
+      if (currentStepIndex === 1) {
+        const res = await mutation.mutateAsync(values);
+        next();
+      } else if (currentStepIndex === 2) {
+        const res = await mutation.mutateAsync(values);
+        next();
+      } else if (currentStepIndex === 4) {
         const res = await mutation.mutateAsync(values);
         const data = (res as AuthResponse).data.data;
         dispatch(setUserSlice(data));
         resetForm();
-      } else {
-        await mutation.mutateAsync(values);
-        next();
       }
     } catch (error) {
       const customError = error as CustomError;
@@ -62,4 +74,4 @@ function useHandleSignup<T>({
   return { handleAuth, isLoading: mutation.isPending };
 }
 
-export default useHandleSignup;
+export default useHandleForgotPassword;

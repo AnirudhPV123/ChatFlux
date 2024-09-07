@@ -1,12 +1,19 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useOtpForm from "@/hooks/useOtpForm";
 import useFormikFormField from "@/hooks/useFormikFormField";
 
 function OtpForm() {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  const [inputHeight, setInputHeight] = useState<number | null>(null); // State to store height
   const { handleInputChange, handleKeyDown } = useOtpForm({ inputsRef });
 
   const { error, isTouched } = useFormikFormField("otp");
+
+  useEffect(() => {
+    if (inputsRef.current[0]) {
+      setInputHeight(inputsRef.current[0].clientWidth);
+    }
+  }, []);
 
   return (
     <>
@@ -25,7 +32,7 @@ function OtpForm() {
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             ref={(el) => (inputsRef.current[index] = el)}
-            style={{ height: inputsRef.current[0]?.clientWidth }}
+            style={{ height: `${inputHeight}px` }}
             className="rounded-lg border border-gray-700 bg-gray-800 text-center text-xl text-white caret-transparent outline-none focus:border-purple-500"
           />
         ))}

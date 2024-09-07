@@ -1,29 +1,40 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, ReactNode } from "react";
+import { FormikProps } from "formik";
 import {
   LoginInitialValues,
   SignUpInitialValues,
 } from "@/components/auth/types";
-import { FormikProps } from "formik";
 
-export const FormikContext = createContext<
-  FormikProps<SignUpInitialValues | LoginInitialValues> | undefined
->(undefined);
+// Define a generic type for Formik context
+export type FormikContextType<T> = FormikProps<T> | undefined;
 
-export const useFormikContext = () => {
-  const context = useContext(FormikContext);
+// Create context with a generic type
+export const FormikContext =
+  createContext<FormikContextType<LoginInitialValues | SignUpInitialValues>>(
+    undefined,
+  );
+
+// Custom hook to use Formik context
+export const useFormikContext = <T,>() => {
+  const context = useContext(FormikContext) as FormikContextType<T>;
   if (!context) {
     throw new Error("useFormikContext must be used within a FormikProvider");
   }
   return context;
 };
 
-export function FormikProvider<
-  T extends LoginInitialValues | SignUpInitialValues,
->({ formik, children }: { formik: FormikProps<T>; children: React.ReactNode }) {
+// Provider component
+export function FormikProvider<T>({
+  formik,
+  children,
+}: {
+  formik: FormikProps<T>;
+  children: ReactNode;
+}) {
   return (
     <FormikContext.Provider
       value={
-        formik as unknown as FormikProps<
+        formik as unknown as FormikContextType<
           LoginInitialValues | SignUpInitialValues
         >
       }

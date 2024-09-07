@@ -23,6 +23,13 @@ const emailValidationSchema = Yup.object({
 });
 const passwordValidationSchema = Yup.object({ password });
 
+const confirmPasswordValidationSchema = Yup.object().shape({
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("password"), null], "Passwords must match")
+    .required("Please confirm your password"),
+});
+
+
 const detailsValidationSchema = Yup.object().shape({
   username: Yup.string()
     .required("Username is required")
@@ -77,4 +84,5 @@ export {
   passwordValidationSchema,
   detailsValidationSchema,
   otpValidationSchema,
+  confirmPasswordValidationSchema
 };

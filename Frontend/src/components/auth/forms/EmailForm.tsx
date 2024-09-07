@@ -1,9 +1,11 @@
 import InputField from "../InputField";
 
-function EmailForm() {
+function EmailForm({label="Email address"}: {label?: string}) {
+  console.log("EmailForm",label);
+  
   return (
     <InputField
-      label="Email address"
+      label={label}
       key="email"
       type="email"
       name="email"

@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useFormikContext } from "@/context/FormikContext";
 import useFormikFormField from "@/hooks/useFormikFormField";
 import PasswordField from "../PasswordField";
+import { FormikValues } from "formik";
+import PasswordCondition from "../PasswordCondition";
 
 interface PasswordConditions {
   isLetter: boolean;
@@ -9,8 +11,14 @@ interface PasswordConditions {
   isValidLength: boolean;
 }
 
+interface Conditions {
+  key: string;
+  text: string;
+  condition: boolean;
+}
+
 function PasswordForm() {
-  const { values } = useFormikContext();
+  const { values }: { values: FormikValues } = useFormikContext();
   const passwordValue = values.password || "";
 
   const [passwordConditions, setPasswordConditions] =
@@ -28,7 +36,7 @@ function PasswordForm() {
     });
   }, [passwordValue]);
 
-  const conditions = useMemo(
+  const conditions: Conditions[] = useMemo(
     () => [
       {
         key: "isLetter",
@@ -59,23 +67,18 @@ function PasswordForm() {
       </h3>
       <div className="flex flex-col gap-2">
         {conditions.map(({ key, text, condition }) => (
-          <label key={key} className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={condition}
-              className={`checkbox-primary checkbox size-4`}
-              disabled
-            />
-            <span
-              className={`label-text text-xs ${error && isTouched && !condition && "text-error"}`}
-            >
-              {text}
-            </span>
-          </label>
+          <PasswordCondition
+            condition={condition}
+            key={key}
+            text={text}
+            error={error}
+            isTouched={isTouched as boolean}
+          />
         ))}
       </div>
     </>
   );
 }
 
-export default PasswordForm;
+const MemoizedPasswordForm = memo(PasswordForm);
+export default MemoizedPasswordForm;
