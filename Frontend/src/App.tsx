@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import PageLayout from "./layout/PageLayout";
 import ProtectedRoute from "./layout/ProtectedRoute";
-import { LoginPage, SignupPage, ForgotPasswordPage } from "@/pages";
+import { LoginPage, SignupPage, ForgotPasswordPage, HomePage } from "@/pages";
 import "@/assets/styles/global.css";
 
 import {
@@ -23,6 +23,11 @@ function App() {
       path: "/forgot-password",
       element: <ForgotPasswordPage />,
       authentication: false,
+    },
+    {
+      path: "/",
+      element: <HomePage />,
+      authentication: true,
     },
   ];
 

@@ -1,8 +1,4 @@
-import {
-  BackButton,
-  ProgressBar,
-  ProgressSteps,
-} from "./AuthProgressComponents";
+import { ProgressBar, ProgressSteps, BackButton } from "./";
 
 type AuthProgressProps = {
   totalSteps: number;
@@ -51,9 +47,10 @@ function AuthProgress({
       <div className="relative flex w-full">
         {/* back button */}
         {(flowType === "signup" && !isLastStep) ||
-          ((currentStepIndex !== 2 || currentStepIndex !== 3) && (
-            <BackButton back={back} />
-          ))}
+          (flowType === "forgotPassword" &&
+            (currentStepIndex !== 2 || currentStepIndex !== 3) && (
+              <BackButton back={back} />
+            ))}
 
         {/* progress steps */}
         <ProgressSteps

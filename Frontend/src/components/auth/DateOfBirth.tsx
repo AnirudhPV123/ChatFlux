@@ -1,5 +1,5 @@
 import { months } from "@/constants/months";
-import useFormikFormField from "@/hooks/useFormikFormField";
+import useFormikFormField from "@/hooks/auth/useFormikFormField";
 import { FC, memo } from "react";
 
 interface DateOfBirthValue {

@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { useFormikContext } from "@/context/FormikContext";
-import useFormikFormField from "@/hooks/useFormikFormField";
+import useFormikFormField from "@/hooks/auth/useFormikFormField";
 import PasswordField from "../PasswordField";
 import { FormikValues } from "formik";
 import PasswordCondition from "../PasswordCondition";
@@ -61,7 +61,11 @@ function PasswordForm() {
 
   return (
     <>
-      <PasswordField />
+      <PasswordField
+        label="Create Password"
+        passwordType="password"
+        placeholder="Password"
+      />
       <h3 className="mt-2 text-sm font-semibold text-gray-300">
         Your password must contain at least:
       </h3>

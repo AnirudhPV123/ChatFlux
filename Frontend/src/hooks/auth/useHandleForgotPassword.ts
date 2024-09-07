@@ -1,5 +1,5 @@
 import { AppDispatch } from "@/redux/store";
-import { setUserSlice, UserType } from "@/redux/userSlice";
+import { setUserSlice } from "@/redux/userSlice";
 import {
   forgotPasswordVerifyEmail,
   forgotPasswordVerifyOtp,
@@ -8,22 +8,9 @@ import {
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import { FormikErrors, FormikHelpers } from "formik";
 import { useDispatch } from "react-redux";
-
-interface CustomError extends Error {
-  response?: {
-    data?: {
-      message: string;
-    };
-  };
-}
-
-type AuthResponse = {
-  data: {
-    data: UserType;
-  };
-};
-
-type AuthMutation<T> = UseMutationResult<AuthResponse, Error, T>;
+import { AuthResponse, CustomError } from "./types";
+import { ForgotPasswordInitialValues } from "@/components/auth/types";
+import { useNavigate } from "react-router-dom";
 
 function useHandleForgotPassword<T>({
   currentStepIndex,
@@ -33,8 +20,13 @@ function useHandleForgotPassword<T>({
   currentStepIndex: number;
 }) {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate()
 
-  const mutation: AuthMutation<T> = useMutation({
+  const mutation: UseMutationResult<
+    AuthResponse,
+    Error,
+    ForgotPasswordInitialValues
+  > = useMutation({
     mutationFn:
       currentStepIndex === 1
         ? forgotPasswordVerifyEmail
@@ -45,21 +37,25 @@ function useHandleForgotPassword<T>({
   });
 
   const handleAuth = async (
-    values: T,
+    values: ForgotPasswordInitialValues,
     { setErrors, resetForm }: FormikHelpers<T>,
   ) => {
     try {
       if (currentStepIndex === 1) {
         const res = await mutation.mutateAsync(values);
+        console.log("forgot password", res);
         next();
       } else if (currentStepIndex === 2) {
         const res = await mutation.mutateAsync(values);
+        console.log("forgot otp", res);
         next();
       } else if (currentStepIndex === 4) {
         const res = await mutation.mutateAsync(values);
         const data = (res as AuthResponse).data.data;
+        console.log("reset password asdf", data);
         dispatch(setUserSlice(data));
         resetForm();
+        navigate('/')
       }
     } catch (error) {
       const customError = error as CustomError;

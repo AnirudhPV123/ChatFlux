@@ -1,4 +1,4 @@
-import useFormikFormField from "@/hooks/useFormikFormField";
+import useFormikFormField from "@/hooks/auth/useFormikFormField";
 import { memo } from "react";
 
 type InputFieldProps<T> = {

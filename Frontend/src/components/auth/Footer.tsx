@@ -5,7 +5,7 @@ type FooterProps = {
   message: string;
   link: string;
   url: string;
-  authType: "login" | "signup";
+  authType: "login" | "signup" | "forgotPassword";
 };
 
 const Footer: React.FC<FooterProps> = ({ message, link, url, authType }) => {

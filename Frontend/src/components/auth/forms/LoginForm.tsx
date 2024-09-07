@@ -1,22 +1,37 @@
 import { FC, memo } from "react";
-import { LoginInitialValues, UseHandleAuth } from "../types";
-import { CustomError, Button, InputField } from "../";
+import {
+  CustomFormikErrors,
+  LoginInitialValues,
+  UseHandleAuth,
+} from "../types";
+import { CustomError, Button, InputField, PasswordField } from "../";
 import { FormikProvider } from "@/context/FormikContext";
-import useHandleLogin from "@/hooks/useHandleLogin";
-import PasswordField from "../PasswordField";
-import useLoginFormik from "@/hooks/useLoginFormik";
+import useHandleLogin from "@/hooks/auth/useHandleLogin";
+import { useFormik } from "formik";
+import { loginValidationSchema } from "@/validators/authValidatorSchema";
+
+const initialValues: LoginInitialValues = {
+  email: "",
+  password: "",
+};
 
 const LoginForm: FC = () => {
   const { handleAuth, isLoading }: UseHandleAuth<LoginInitialValues> =
     useHandleLogin();
 
-  const { handleSubmit, errors, ...formik } = useLoginFormik(handleAuth);
+  const formik = useFormik<LoginInitialValues>({
+    initialValues,
+    validationSchema: loginValidationSchema,
+    onSubmit: handleAuth,
+  });
+
+  const errors: CustomFormikErrors<LoginInitialValues> = formik.errors;
 
   return (
-    <FormikProvider formik={{ handleSubmit, errors, ...formik }}>
+    <FormikProvider formik={formik}>
       {errors?.server && <CustomError message={errors.server} />}
       <form
-        onSubmit={handleSubmit}
+        onSubmit={formik.handleSubmit}
         noValidate
         className="flex w-full flex-col gap-2"
       >
@@ -27,7 +42,11 @@ const LoginForm: FC = () => {
           name="email"
           placeholder="name@domain.com"
         />
-        <PasswordField />
+        <PasswordField
+          label="Enter your password"
+          passwordType="password"
+          placeholder="Password"
+        />
         <Button isLoading={isLoading}>Login</Button>
       </form>
     </FormikProvider>

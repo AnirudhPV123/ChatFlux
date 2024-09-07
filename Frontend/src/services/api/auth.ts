@@ -1,67 +1,67 @@
+import { AuthResponse } from "@/hooks/auth/types";
 import apiClient from "./api";
+
 import {
+  ForgotPasswordInitialValues,
   LoginInitialValues,
   SignUpInitialValues,
 } from "@/components/auth/types";
+import convertToISODate from "@/utils/convertToISODate";
 
-const loginUser = async (values: LoginInitialValues) => {
-  console.log("login user", values);
-  return
-  // return await apiClient.post("/api/v1/users/login", values);
+const loginUser = async (values: LoginInitialValues): Promise<AuthResponse> => {
+  return await apiClient.post("/api/v1/users/login", values);
 };
 
-const signupUser = async (values: SignUpInitialValues) => {
+const signupUser = async (
+  values: SignUpInitialValues,
+): Promise<AuthResponse> => {
   const data = {
     username: values.username,
     email: values.email,
     password: values.password,
-    dateOfBirth: `${values.dateOfBirth.year}-${values.dateOfBirth.month}-${values.dateOfBirth.day}`,
+    dateOfBirth: convertToISODate(values.dateOfBirth),
     gender: values.gender,
   };
-  console.log("signup user", data);
-  return
-  // return await apiClient.post("/api/v1/users/signup", data);
+  return await apiClient.post("/api/v1/users/signup", data);
 };
 
-const signupVerifyOtp = async (values: SignUpInitialValues) => {
+const signupVerifyOtp = async (
+  values: SignUpInitialValues,
+): Promise<AuthResponse> => {
   const data = {
     otp: values.otp,
     email: values.email,
   };
-  console.log("verify otp", data);
-  return
-  // return await apiClient.post("/api/v1/users/signup/verify-otp", data);
+  return await apiClient.post("/api/v1/users/signup/verify-otp", data);
 };
 
-const forgotPasswordVerifyEmail = async (values: SignUpInitialValues) => {
+const forgotPasswordVerifyEmail = async (
+  values: ForgotPasswordInitialValues,
+): Promise<AuthResponse> => {
   const data = {
     email: values.email,
   };
-  console.log("verify email", data);
-  return
-  
-  // return await apiClient.post("/api/v1/users/forgot-password", data);
+  return await apiClient.post("/api/v1/users/forgot-password", data);
 };
 
-const forgotPasswordVerifyOtp = async (values: SignUpInitialValues) => {
+const forgotPasswordVerifyOtp = async (
+  values: ForgotPasswordInitialValues,
+): Promise<AuthResponse> => {
   const data = {
     otp: values.otp,
     email: values.email,
   };
-  console.log("verify otp", data);
-  return
-  // return await apiClient.post("/api/v1/users/forgot-password/verify-otp", data);
+  return await apiClient.post("/api/v1/users/forgot-password/verify-otp", data);
 };
 
-const resetPassword = async (values: SignUpInitialValues) => {
+const resetPassword = async (
+  values: ForgotPasswordInitialValues,
+): Promise<AuthResponse> => {
   const data = {
     email: values.email,
     password: values.password,
   };
-
-  console.log("reset password", data);
-  return
-  // return await apiClient.post("/api/v1/users/reset-password", data);
+  return await apiClient.post("/api/v1/users/forgot-password/reset", data);
 };
 
 export {
@@ -70,5 +70,5 @@ export {
   signupVerifyOtp,
   forgotPasswordVerifyEmail,
   forgotPasswordVerifyOtp,
-  resetPassword
+  resetPassword,
 };

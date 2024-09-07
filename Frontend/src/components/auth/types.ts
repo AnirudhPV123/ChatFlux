@@ -17,7 +17,7 @@ export type SignUpInitialValues = {
 
 export type ForgotPasswordInitialValues = {
   email: string;
-  otp: null | string;
+  otp: string | null;
   password: string;
   confirmPassword: string;
 };

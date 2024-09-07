@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import useOtpForm from "@/hooks/useOtpForm";
-import useFormikFormField from "@/hooks/useFormikFormField";
+import { useEffect, useRef, useState } from "react";
+import useOtpForm from "@/hooks/auth/useOtpForm";
+import useFormikFormField from "@/hooks/auth/useFormikFormField";
 
 function OtpForm() {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
@@ -36,6 +36,9 @@ function OtpForm() {
             className="rounded-lg border border-gray-700 bg-gray-800 text-center text-xl text-white caret-transparent outline-none focus:border-purple-500"
           />
         ))}
+        <h2 className="col-span-6 text-right text-sm text-gray-400 cursor-pointer hover:text-white">
+          Resend Otp
+        </h2>
       </div>
     </>
   );

@@ -1,20 +1,17 @@
-import EmailForm from "./EmailForm";
-import OtpForm from "./OtpForm";
-import { PasswordForm } from ".";
-import { useMultistepForm } from "@/hooks/useMultistepForm";
-import useHandleForgotPassword from "@/hooks/useHandleForgotPassword";
+import { EmailForm, OtpForm, PasswordForm, ConfirmPasswordForm } from "./";
+import { useMultistepForm } from "@/hooks/auth/useMultistepForm";
+import useHandleForgotPassword from "@/hooks/auth/useHandleForgotPassword";
 import {
   CustomFormikErrors,
   ForgotPasswordInitialValues,
   UseHandleAuth,
 } from "../types";
 import { FormikProvider } from "@/context/FormikContext";
-import { useFormik } from "formik";
+import { FormikHelpers, useFormik } from "formik";
 import Header from "../Header";
 import AuthProgress from "../AuthProgress";
 import CustomError from "../CustomError";
 import { Button, Footer } from "..";
-import ConfirmPasswordForm from "./ConfirmPasswordForm";
 import { getForgotPasswordValidationSchema } from "@/utils/getForgotPasswordValidationSchema";
 
 const initialValues = {
@@ -51,7 +48,10 @@ function ForgotPasswordForm() {
     validationSchema: getForgotPasswordValidationSchema(currentStepIndex),
     onSubmit: (values, { setTouched, ...rest }) => {
       if (currentStepIndex !== 3) {
-        handleAuth(values, { setTouched, ...rest });
+        handleAuth(values, {
+          setTouched,
+          ...rest,
+        } as FormikHelpers<ForgotPasswordInitialValues>);
       } else {
         next();
       }
@@ -86,19 +86,17 @@ function ForgotPasswordForm() {
         {/* Step form */}
         {step}
         <Button isLoading={isLoading}>
-          {currentStepIndex === 1
+          {currentStepIndex === 1 || currentStepIndex === 3
             ? "Next"
             : currentStepIndex === 2
               ? "Verify"
-              : currentStepIndex === 3
-                ? "Next"
-                : "Submit"}
+              : "Submit"}
         </Button>
       </form>
 
       {currentStepIndex === 1 && (
         <Footer
-          authType="login"
+          authType="forgotPassword"
           message="Go back to login?"
           link="Login in here"
           url="/login"

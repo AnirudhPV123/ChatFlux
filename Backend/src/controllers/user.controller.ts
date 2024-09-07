@@ -36,7 +36,7 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
   const { email, otp } = validateRequest({ schema: emailAndOtpValidator, data: req.body });
 
   const redisData: object | null = await getRedisValue(email as string);
-  // TODO: test putting this null checking code to the getRedisValue function itself
+
   if (redisData === null) {
     throw new CustomError(404, 'OTP expired.');
   }
@@ -101,7 +101,7 @@ export const forgotPasswordGenerateOtp = asyncHandler(async (req: Request, res: 
     throw new CustomError(404, 'User not found.');
   }
 
-  handleOtpProcess({ email, expiryTime: 10, data: {} });
+  handleOtpProcess({ email, expiryTime: 60 * 5, data: {} });
 
   return res.status(200).json(new CustomResponse(200, 'OTP sent successfully.'));
 });
@@ -140,7 +140,15 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   user.password = password;
   await user.save();
 
-  return res.status(200).json(new CustomResponse(200, 'Password reset successfully.'));
+  const {
+    password: _password,
+    refreshToken: _refreshToken,
+    ...userWithoutSensitiveInfo
+  } = user.toObject();
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, userWithoutSensitiveInfo, 'Password reset successfully.'));
 });
 
 export const login = asyncHandler(async (req, res) => {

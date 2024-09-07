@@ -1,25 +1,11 @@
-import { AppDispatch } from "@/redux/store";
-import { setUserSlice, UserType } from "@/redux/userSlice";
+import { setUserSlice } from "@/redux/userSlice";
 import { signupUser, signupVerifyOtp } from "@/services/api/auth";
 import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import { FormikErrors, FormikHelpers } from "formik";
-import { useDispatch } from "react-redux";
-
-interface CustomError extends Error {
-  response?: {
-    data?: {
-      message: string;
-    };
-  };
-}
-
-type AuthResponse = {
-  data: {
-    data: UserType;
-  };
-};
-
-type AuthMutation<T> = UseMutationResult<AuthResponse, Error, T>;
+import { AuthResponse, CustomError } from "./types";
+import { SignUpInitialValues } from "@/components/auth/types";
+import { useTypedDispatch } from "../useRedux";
+import { useNavigate } from "react-router-dom";
 
 function useHandleSignup<T>({
   isLastStep,
@@ -28,12 +14,14 @@ function useHandleSignup<T>({
   isLastStep: boolean;
   next: () => void;
 }) {
-  const dispatch: AppDispatch = useDispatch();
+  const dispatch = useTypedDispatch();
+  const navigate = useNavigate()
 
-  const mutation: AuthMutation<T> = useMutation({
-    mutationFn: isLastStep ? signupVerifyOtp : signupUser,
-    mutationKey: ["authUser"],
-  });
+  const mutation: UseMutationResult<AuthResponse, Error, SignUpInitialValues> =
+    useMutation({
+      mutationFn: isLastStep ? signupVerifyOtp : signupUser,
+      mutationKey: ["authUser"],
+    });
 
   const handleAuth = async (
     values: T,
@@ -41,12 +29,14 @@ function useHandleSignup<T>({
   ) => {
     try {
       if (isLastStep) {
-        const res = await mutation.mutateAsync(values);
+        const res = await mutation.mutateAsync(values as SignUpInitialValues);
         const data = (res as AuthResponse).data.data;
         dispatch(setUserSlice(data));
         resetForm();
+        navigate('/')
       } else {
-        await mutation.mutateAsync(values);
+        await mutation.mutateAsync(values as SignUpInitialValues);
+        console.log("signup return");
         next();
       }
     } catch (error) {

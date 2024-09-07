@@ -1,19 +1,16 @@
-import useFormikFormField from "@/hooks/useFormikFormField";
+import useFormikFormField from "@/hooks/auth/useFormikFormField";
 import { Eye, EyeOff } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 
 function PasswordField({
-  label="Password" ,
-  passwordType = "password",
-  placeholder = "Password",
+  label,
+  passwordType,
+  placeholder,
 }: {
-  label?: string;
-  passwordType?: string;
-  placeholder?: string;
+  label: string;
+  passwordType: string;
+  placeholder: string;
 }) {
-
-  console.log("PasswordField",label);
-  
   const [isPasswordShow, setIsPasswordShow] = useState(false);
   const { error, isTouched, value, handleChange, handleBlur } =
     useFormikFormField(passwordType);
