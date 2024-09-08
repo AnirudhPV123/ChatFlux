@@ -21,7 +21,6 @@ const Footer: React.FC<FooterProps> = ({ message, link, url, authType }) => {
       )}
 
       <div className="divider" />
-
       <Link className="text-center text-sm" to={url}>
         {message}&nbsp;
         <span className="font-semibold text-white underline">{link}</span>

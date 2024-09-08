@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 export interface UserType extends Document {
+  provider: string;
+  providerId: string;
   username: string;
   email: string;
   password: string;
@@ -17,6 +19,12 @@ export interface UserType extends Document {
 
 const userSchema = new Schema<UserType>(
   {
+    provider: {
+      type: String,
+    },
+    providerId: {
+      type: String,
+    },
     username: {
       type: String,
       required: true,
@@ -25,7 +33,6 @@ const userSchema = new Schema<UserType>(
     },
     email: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -33,15 +40,12 @@ const userSchema = new Schema<UserType>(
     },
     password: {
       type: String,
-      required: true,
     },
     dateOfBirth: {
       type: Date,
-      required: true,
     },
     gender: {
       type: String,
-      required: true,
       enum: ['male', 'female', 'other'],
     },
     refreshToken: {

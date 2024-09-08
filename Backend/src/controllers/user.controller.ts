@@ -1,20 +1,22 @@
-import { UserType, User } from '../models/user.model';
-import { asyncHandler } from '../utils/asyncHandler';
-import { CustomError } from '../utils/CustomError';
-import { CustomResponse } from '../utils/CustomResponse';
-import { generateTokens } from '../utils/generateTokens';
+import { UserType, User } from '@/models/user.model';
+import { asyncHandler } from '@/utils/asyncHandler';
+import { CustomError } from '@/utils/CustomError';
+import { CustomResponse } from '@/utils/CustomResponse';
+import { generateTokens } from '@/utils/generateTokens';
 import {
   forgotPasswordGenerateOtpValidator,
   emailAndPasswordValidator,
   signUpGenerateOtpValidator,
   emailAndOtpValidator,
-} from '../utils/validators/userValidators';
-import { cookieConfig as options } from '../config/cookieConfig';
+} from '@/utils/validators/userValidators';
+import { cookieConfig as options } from '@/config/cookieConfig';
 import { Request, Response } from 'express';
-import { getRedisValue } from '../utils/redisOperations';
-import { handleOtpProcess } from '../utils/handleOtpProcess';
-import { validateRequest } from '../utils/validateRequest';
+import { getRedisValue } from '@/utils/redisOperations';
+import { handleOtpProcess } from '@/utils/handleOtpProcess';
+import { validateRequest } from '@/utils/validateRequest';
+import { LoginWithAuthProvidersProps } from './types';
 
+// Generate otp and save user data and otp in redis session
 export const signUpGenerateOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, ...userData } = validateRequest({
     schema: signUpGenerateOtpValidator,
@@ -32,6 +34,7 @@ export const signUpGenerateOtp = asyncHandler(async (req: Request, res: Response
   return res.status(200).json(new CustomResponse(201, 'OTP generated successfully.'));
 });
 
+// Verify otp with otp in redis session and create user
 export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = validateRequest({ schema: emailAndOtpValidator, data: req.body });
 
@@ -54,8 +57,6 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     gender: string;
     otp: string;
   };
-
-  console.log(redisData);
 
   if (otp !== redisOtp) {
     throw new CustomError(401, 'Invalid OTP.');
@@ -92,12 +93,12 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     .json(new CustomResponse(201, userWithoutSensitiveInfo, 'User registered successfully.'));
 });
 
-// otp generate
+// Generate otp and save key as email and otp in redis session
 export const forgotPasswordGenerateOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email } = validateRequest({ schema: forgotPasswordGenerateOtpValidator, data: req.body });
 
   const user: UserType | null = await User.findOne({ email });
-  if (!user) {
+  if (!user || user?.provider) {
     throw new CustomError(404, 'User not found.');
   }
 
@@ -106,7 +107,7 @@ export const forgotPasswordGenerateOtp = asyncHandler(async (req: Request, res: 
   return res.status(200).json(new CustomResponse(200, 'OTP sent successfully.'));
 });
 
-// otp validate and permit reset password
+// Verify otp with redis otp and permit reset password
 export const forgotPasswordVerifyOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = validateRequest({ schema: emailAndOtpValidator, data: req.body });
 
@@ -159,7 +160,8 @@ export const login = asyncHandler(async (req, res) => {
 
   const user: UserType | null = await User.findOne({ email });
 
-  if (!user) {
+  // if email found but its social login
+  if (!user || user?.provider) {
     throw new CustomError(404, 'User not found.');
   }
 
@@ -191,3 +193,37 @@ export const login = asyncHandler(async (req, res) => {
     .cookie('refreshToken', refreshToken, options)
     .json(new CustomResponse(200, userWithoutSensitiveInfo, 'User logged in successfully.'));
 });
+
+// Login with other social logins like google and github
+export const loginWithAuthProviders = async ({
+  provider,
+  providerId,
+  username,
+  email,
+  avatar,
+}: LoginWithAuthProvidersProps) => {
+  try {
+    let user = await User.findOne({ $or: [{ providerId: providerId }, { email: email }] });
+    if (!user) {
+      user = await User.create({
+        provider: provider,
+        providerId: providerId,
+        username: username,
+        email: email,
+        avatar: avatar,
+      });
+    }
+
+    const { accessToken, refreshToken } = await generateTokens({
+      userId: user?._id as string,
+      isGenerateRefreshToken: true,
+    });
+
+    user.refreshToken = refreshToken;
+    await user.save;
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new CustomError(500, 'Something went wrong. Please try again.');
+  }
+};

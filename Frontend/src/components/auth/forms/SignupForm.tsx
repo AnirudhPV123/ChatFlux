@@ -3,7 +3,7 @@ import {
   SignUpInitialValues,
   UseHandleAuth,
 } from "../types";
-import { CustomError, Button, Header, Footer ,AuthProgress} from "../";
+import { CustomError, Button, Header, Footer, AuthProgress } from "../";
 import { FormikProvider } from "@/context/FormikContext";
 import { useMultistepForm } from "@/hooks/auth/useMultistepForm";
 import useHandleSignup from "@/hooks/auth/useHandleSignup";
@@ -102,7 +102,12 @@ function SignupForm() {
         <Button isLoading={isLoading}>{isLastStep ? "Verify" : "Next"}</Button>
       </form>
 
-      {isFirstStep && <SocialLoginForm />}
+      {isFirstStep && (
+        <>
+          <div className="divider">or</div>
+          <SocialLoginForm />
+        </>
+      )}
 
       {isFirstStep && (
         <Footer

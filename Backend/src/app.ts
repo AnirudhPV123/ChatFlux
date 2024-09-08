@@ -7,11 +7,23 @@ import corsConfig from './config/corsConfig';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.middleware';
 import { CustomError } from './utils/CustomError';
 import userRouter from './routes/user.routes';
+import passport from 'passport';
+import session from 'express-session';
+import './config/passportConfig';
 
 const app: Application = express();
 
 // Global Middleware
 app.use(cors(corsConfig));
+app.use(
+  session({
+    secret: process.env.SECTION_SECRET_KEY as string,
+    resave: false,
+    saveUninitialized: true,
+  }),
+);
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(helmet());
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));

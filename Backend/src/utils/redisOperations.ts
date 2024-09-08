@@ -1,4 +1,4 @@
-import { redisClient } from '../config/redisConfig';
+import { redisClient } from '@/config/redisConfig';
 
 type SetRedisValueProps = {
   key: string;

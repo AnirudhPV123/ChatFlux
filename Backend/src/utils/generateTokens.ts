@@ -1,4 +1,4 @@
-import { User } from '../models/user.model';
+import { User } from '@/models/user.model';
 import { CustomError } from './CustomError';
 
 type GenerateTokensProps = {

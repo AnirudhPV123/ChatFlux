@@ -2,9 +2,9 @@ import { useFormikContext } from "@/context/FormikContext";
 import { useMemo } from "react";
 
 // Define the custom hook
-function useFormikFormField(fieldName: string) {
+function useFormikFormField<T>(fieldName: string) {
   const { errors, touched, values, handleBlur, handleChange } =
-    useFormikContext();
+    useFormikContext<T>();
 
   const error = useMemo(
     () => errors[fieldName as keyof typeof errors] as string | undefined,

@@ -4,11 +4,19 @@ import {
   LoginInitialValues,
   UseHandleAuth,
 } from "../types";
-import { CustomError, Button, InputField, PasswordField } from "../";
+import {
+  CustomError,
+  Button,
+  InputField,
+  PasswordField,
+  Footer,
+  Header,
+} from "../";
 import { FormikProvider } from "@/context/FormikContext";
 import useHandleLogin from "@/hooks/auth/useHandleLogin";
 import { useFormik } from "formik";
 import { loginValidationSchema } from "@/validators/authValidatorSchema";
+import SocialLoginForm from "./SocialLoginForm";
 
 const initialValues: LoginInitialValues = {
   email: "",
@@ -29,7 +37,10 @@ const LoginForm: FC = () => {
 
   return (
     <FormikProvider formik={formik}>
+      <Header>Login</Header>
       {errors?.server && <CustomError message={errors.server} />}
+      <SocialLoginForm />
+      <div className="divider">or</div>
       <form
         onSubmit={formik.handleSubmit}
         noValidate
@@ -49,6 +60,12 @@ const LoginForm: FC = () => {
         />
         <Button isLoading={isLoading}>Login</Button>
       </form>
+      <Footer
+        message="Create an account?"
+        link="SignUp"
+        url="/signup"
+        authType="login"
+      />
     </FormikProvider>
   );
 };

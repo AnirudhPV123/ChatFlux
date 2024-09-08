@@ -32,9 +32,7 @@ function AuthProgress({
           { step: 4, heading: "Confirm password" },
         ];
 
-  const { heading }: { heading: string } = steps.find(
-    (s) => s.step === currentStepIndex,
-  );
+  const step = steps.find((s) => s.step === currentStepIndex);
 
   return (
     <div className="mb-6 flex flex-col items-center">
@@ -46,17 +44,17 @@ function AuthProgress({
 
       <div className="relative flex w-full">
         {/* back button */}
-        {(flowType === "signup" && !isLastStep) ||
+        {/* if its signup show back button except for last step */}
+        {/* if its forgot password show back button except for step 2 and 3 */}
+        {((flowType === "signup" && !isLastStep) ||
           (flowType === "forgotPassword" &&
-            (currentStepIndex !== 2 || currentStepIndex !== 3) && (
-              <BackButton back={back} />
-            ))}
+            ![2, 3].includes(currentStepIndex))) && <BackButton back={back} />}
 
         {/* progress steps */}
         <ProgressSteps
           totalSteps={totalSteps}
           currentStepIndex={currentStepIndex}
-          heading={heading}
+          heading={step?.heading || ""}
         />
       </div>
     </div>
