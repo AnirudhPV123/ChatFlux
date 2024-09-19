@@ -24,8 +24,9 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
       throw new CustomError(403, 'Invalid token.');
     }
 
+    type User = UserType & { _id: string };
     // Find user by ID from the decoded token
-    const user: UserType = await User.findById(decodedToken._id).select('-password -refreshToken');
+    const user: User = await User.findById(decodedToken._id).select('-password -refreshToken');
 
     if (!user) {
       throw new CustomError(403, 'Invalid Access Token.');

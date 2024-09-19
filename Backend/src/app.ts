@@ -7,6 +7,7 @@ import corsConfig from './config/corsConfig';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.middleware';
 import { CustomError } from './utils/CustomError';
 import userRouter from './routes/user.routes';
+import chatRouter from './routes/chat.routes';
 import passport from 'passport';
 import session from 'express-session';
 import './config/passportConfig';
@@ -33,6 +34,7 @@ app.use(morgan('combined'));
 
 // Route Handlers
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/chat', chatRouter);
 
 // Unknown Endpoint Handler
 app.all('*', (req, res, next) => {

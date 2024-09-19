@@ -1,9 +1,11 @@
-import React from 'react'
+import SideBar from "../components/SideBar/SideBar";
 
 function HomePage() {
   return (
-    <div>Home</div>
-  )
+    <div className="home-container flex overflow-y-clip">
+      <SideBar />
+    </div>
+  );
 }
 
-export default HomePage
+export default HomePage;

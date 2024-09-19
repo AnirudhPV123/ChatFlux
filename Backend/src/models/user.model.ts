@@ -11,6 +11,7 @@ export interface UserType extends Document {
   dateOfBirth: Date;
   gender: string;
   refreshToken?: string;
+  avatar?: string;
 
   generateAccessToken(): string;
   generateRefreshToken(): string;
@@ -49,6 +50,9 @@ const userSchema = new Schema<UserType>(
       enum: ['male', 'female', 'other'],
     },
     refreshToken: {
+      type: String,
+    },
+    avatar: {
       type: String,
     },
   },

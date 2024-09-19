@@ -62,12 +62,16 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     throw new CustomError(401, 'Invalid OTP.');
   }
 
+  const maleProfilePhoto = `https://avatar.iran.liara.run/public/boy?username=${username}`;
+  const femaleProfilePhoto = `https://avatar.iran.liara.run/public/girl?username=${username}`;
+
   const createdUser: UserType | null = await User.create({
     username,
     email,
     password,
     dateOfBirth,
     gender,
+    avatar: gender === 'male' ? maleProfilePhoto : femaleProfilePhoto,
   });
 
   const { accessToken, refreshToken } = await generateTokens({
@@ -202,6 +206,7 @@ export const loginWithAuthProviders = async ({
   email,
   avatar,
 }: LoginWithAuthProvidersProps) => {
+  console.log('avatar', avatar);
   try {
     let user = await User.findOne({ $or: [{ providerId: providerId }, { email: email }] });
     if (!user) {
@@ -227,3 +232,49 @@ export const loginWithAuthProviders = async ({
     throw new CustomError(500, 'Something went wrong. Please try again.');
   }
 };
+
+export const getUser = asyncHandler(async (req: Request, res: Response) => {
+  const id = (req.user as any)._id;
+  const user = await User.findById(id).select('-password -refreshToken -provider -providerId');
+  if (!user) {
+    throw new CustomError(404, 'User not found');
+  }
+  console.log(user);
+
+  res.status(200).json(new CustomResponse(200, user));
+});
+
+export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+  res.cookie('accessToken', '', options).cookie('refreshToken', '', options);
+  res.status(200).json(new CustomResponse(200, 'User logout successfully'));
+});
+
+// @DESC get all users
+// @METHOD get
+// @PATH /user/users
+// @RETURN users
+export const getAvailableUsers = asyncHandler(async (req: Request, res: Response) => {
+  console.log("hi here");
+  
+  const id = (req.user as any)._id;
+
+  const users = await User.aggregate([
+    {
+      $match: {
+        _id: {
+          $ne: id, // avoid logged in user
+        },
+      },
+    },
+    {
+      $project: {
+        refreshToken: 0,
+        password: 0,
+        gender: 0,
+        isActive: 0,
+      },
+    },
+  ]);
+
+  res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
+});

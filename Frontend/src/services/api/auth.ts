@@ -64,6 +64,14 @@ const resetPassword = async (
   return await apiClient.post("/api/v1/users/forgot-password/reset", data);
 };
 
+const getUser = async () => {
+  return await apiClient.get("/api/v1/users/");
+};
+
+const logoutUser = async () => {
+  return await apiClient.get("/api/v1/users/logout");
+};
+
 export {
   loginUser,
   signupUser,
@@ -71,4 +79,6 @@ export {
   forgotPasswordVerifyEmail,
   forgotPasswordVerifyOtp,
   resetPassword,
+  getUser,
+  logoutUser,
 };
