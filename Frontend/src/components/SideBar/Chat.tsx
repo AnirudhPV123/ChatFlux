@@ -1,11 +1,11 @@
-import React from "react";
-import { useDispatch } from "react-redux";
-import { setSelectedGroup, setSelectedUser } from "../../redux/userSlice";
+import { setSelectedGroup, setSelectedUser, UserType } from "@/redux/userSlice";
 import moment from "moment";
 import { setSelectedChat } from "../../redux/userSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import { memo, useEffect } from "react";
+import { ChatType } from "@/redux/chatSlice";
 
-function Chat({ chat }) {
+function Chat({ chat }: { chat: ChatType }) {
   const { authUser, onlineUsers } = useTypedSelector((store) => store.user);
   const dispatch = useTypedDispatch();
   const isGroupChat = chat?.isGroupChat;
@@ -15,7 +15,7 @@ function Chat({ chat }) {
     : chat.participants.find(
         (participant) => participant._id !== authUser?._id,
       );
-  const isOnline = user && onlineUsers?.includes(user._id);
+  const isOnline = !isGroupChat && user && onlineUsers?.includes(user?._id);
 
   const handleSelectUser = () => {
     // conditional setup selectedUser or selectedGroup
@@ -97,4 +97,4 @@ function Chat({ chat }) {
   );
 }
 
-export default Chat;
+export default memo(Chat);

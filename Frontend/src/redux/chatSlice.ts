@@ -1,4 +1,12 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { UserType } from "./userSlice";
+
+export type ChatType = {
+  _id: string;
+  isGroupChat: boolean;
+  participants: UserType[];
+  groupName: string;
+};
 
 const chatSlice = createSlice({
   name: "chat",

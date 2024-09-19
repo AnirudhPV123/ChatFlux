@@ -1,18 +1,23 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import UserOptions from "./UserOptions";
 import { createAGroupChat, createAOneOnOneChat } from "@/services/api/chat";
 import { setChats } from "@/redux/chatSlice";
 import toast from "react-hot-toast";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import { UserType } from "@/redux/userSlice";
+import { CustomErrorType } from "@/types";
 
-function ChatCreateOptions({ setAddChat }) {
+function ChatCreateOptions({
+  setAddChat,
+}: {
+  setAddChat: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const { chats } = useTypedSelector((store) => store.chat);
   const { availableUsers } = useTypedSelector((store) => store.user);
-  console.log("chec", availableUsers);
 
-  const [groupStatus, setGroupStatus] = useState(false);
-  const [user, setUser] = useState({});
-  const [groupUsers, setGroupUsers] = useState([]);
+  const [isGroup, setIsGroup] = useState(false);
+  const [user, setUser] = useState<UserType | null>(null);
+  const [groupUsers, setGroupUsers] = useState<UserType[] | []>([]);
   const [groupName, setGroupName] = useState("");
 
   const [error, setError] = useState(false);
@@ -24,22 +29,20 @@ function ChatCreateOptions({ setAddChat }) {
     setLoading(true);
     try {
       // Validate form fields
-      if (!groupStatus && Object.keys(user).length === 0) {
+      if (!isGroup && user !== null && Object.keys(user).length === 0) {
         setError(true);
         return;
       }
-      if (groupStatus && (!groupName || groupUsers.length === 0)) {
+      if (isGroup && (!groupName || groupUsers.length === 0)) {
         setError(true);
         return;
       }
 
       setError(false);
 
-      if (!groupStatus) {
+      if (!isGroup) {
         // Create one-on-one chat
-        console.log("create one on one chat", user._id);
-        const res = await createAOneOnOneChat(user._id);
-        console.log("res", res);
+        const res = await createAOneOnOneChat(user?._id);
         dispatch(setChats([...chats, res.data.data[0]]));
         toast.success("Chat created successfully");
       } else {
@@ -52,12 +55,13 @@ function ChatCreateOptions({ setAddChat }) {
       }
 
       // Reset form fields after successful creation
-      setUser({});
+      setUser(null);
       setGroupUsers([]);
       setGroupName("");
     } catch (error) {
+      const customError = error as CustomErrorType;
       toast.error(
-        error?.response?.data?.message ||
+        customError?.response?.data?.message ||
           "Something went wrong while creating chat.",
       );
     } finally {
@@ -75,8 +79,8 @@ function ChatCreateOptions({ setAddChat }) {
               <input
                 type="checkbox"
                 className="toggle toggle-primary mr-4"
-                checked={groupStatus}
-                onChange={() => setGroupStatus((status) => !status)}
+                checked={isGroup}
+                onChange={() => setIsGroup((status) => !status)}
               />
               <span className="label-text">Is it a group chat?</span>
             </label>
@@ -85,7 +89,7 @@ function ChatCreateOptions({ setAddChat }) {
           {/*  user select option */}
           <UserOptions
             options={availableUsers}
-            groupStatus={groupStatus}
+            isGroup={isGroup}
             user={user}
             groupUsers={groupUsers}
             setUser={setUser}

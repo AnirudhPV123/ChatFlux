@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { setChatSearch } from "../../redux/temporarySlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import { ChatType } from "@/redux/chatSlice";
+import { UserType } from "@/redux/userSlice";
 
 function SearchUserOrGroup() {
   const [searchInput, setSearchInput] = useState("");
@@ -10,9 +12,9 @@ function SearchUserOrGroup() {
 
   useEffect(() => {
     if (!chats) return;
-    const filteredChatIds = chats.filter((chat) =>
+    const filteredChatIds = chats.filter((chat: ChatType) =>
       !chat.isGroupChat
-        ? chat.participants.find((prt) => {
+        ? chat.participants.find((prt: UserType) => {
             return (
               prt._id !== authUser?._id &&
               prt.username.toLowerCase().includes(searchInput.toLowerCase())
@@ -21,7 +23,6 @@ function SearchUserOrGroup() {
         : chat.groupName.toLowerCase().includes(searchInput.toLowerCase()),
     );
 
-    console.log(filteredChatIds);
     dispatch(setChatSearch(filteredChatIds.length ? filteredChatIds : null));
   }, [searchInput, chats, authUser, dispatch]);
 
@@ -41,4 +42,4 @@ function SearchUserOrGroup() {
   );
 }
 
-export default SearchUserOrGroup;
+export default memo(SearchUserOrGroup);

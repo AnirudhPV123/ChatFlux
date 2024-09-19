@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const temporarySlice = createSlice({
   name: "temporary",
   initialState: {
-    chatSearch: null,
+    chatSearch: [],
     // messageReplyDetails: { status: false }, //reply message details (messageId,message owner id),
     // groupMembers: null,
     // selectedChat:null

@@ -1,24 +1,25 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import Chat from "./Chat";
 import { useTypedSelector } from "@/hooks/useRedux";
-// import useGetAllChats from "../../hooks/useGetAllChats";
+import useGetAllChats from "@/hooks/chat/useGetAllChats";
+import { ChatType } from "@/redux/chatSlice";
 
 function AllChats() {
-  // useGetAllChats();
+  useGetAllChats();
+
   const { chats } = useTypedSelector((store) => store.chat);
   const { chatSearch } = useTypedSelector((store) => store.temporary);
   console.log("chats asll", chats);
-  
 
   const chatList = useMemo(() => {
-    return chats?.map((chat) => {
+    return chats?.map((chat: { _id: string }) => {
       if (
         (chatSearch &&
           chatSearch.length > 0 &&
-          chatSearch.find((cht) => cht?._id === chat?._id)) ||
+          chatSearch.find((cht: ChatType) => cht?._id === chat?._id)) ||
         !chatSearch
       ) {
-        return <MemoizedChat key={chat?._id} chat={chat} />;
+        return <Chat key={chat?._id} chat={chat} />;
       }
     });
   }, [chats, chatSearch]);
@@ -40,7 +41,5 @@ function AllChats() {
     </div>
   );
 }
-
-const MemoizedChat = React.memo(Chat);
 
 export default AllChats;

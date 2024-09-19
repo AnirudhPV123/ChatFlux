@@ -276,5 +276,7 @@ export const getAvailableUsers = asyncHandler(async (req: Request, res: Response
     },
   ]);
 
+  console.log("avoided logged in user", users);
+
   res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
 });

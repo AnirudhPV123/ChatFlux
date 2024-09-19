@@ -9,14 +9,18 @@ export type UserType = {
   _v: number;
   createdAt: string;
   updatedAt: string;
+  avatar: string;
+  // isGroupChat: boolean;
+  // participants:[]
+  // groupName:string
 };
 
 type UserSlice = {
   authUser: UserType | null;
   isAuthUser: boolean;
   selectedUser: Array<{ _id: string }> | null;
-  onlineUsers: Array<{ _id: string }> | null;
-  availableUsers: Array<{ _id: string }> | null;
+  onlineUsers: UserType[] | [];
+  availableUsers: UserType[] | [];
   selectedGroup: { groupId: string } | null;
   selectedChat: { chatId: string } | null;
 };
@@ -26,8 +30,8 @@ const initialState: UserSlice = {
   isAuthUser: false,
   selectedUser: null,
   selectedGroup: null,
-  onlineUsers: null,
-  availableUsers: null,
+  onlineUsers: [],
+  availableUsers: [],
   selectedChat: null,
 };
 

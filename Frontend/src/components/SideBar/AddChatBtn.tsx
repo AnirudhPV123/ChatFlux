@@ -1,16 +1,16 @@
 import { Plus } from "lucide-react";
 import ChatCreateOptions from "./ChatCreateOptions";
-import { useState } from "react";
+import { memo, useState } from "react";
 import useGetAvailableUsers from "@/hooks/chat/useGetAvailableUsers";
 
 function AddChatBtn() {
-  useGetAvailableUsers(); 
+  useGetAvailableUsers();
 
   const [addChat, setAddChat] = useState(false);
   return (
     <div id="add-chat-button">
       <button
-        className="btn btn-primary text-white textarea-sm"
+        className="btn btn-primary textarea-sm text-white"
         onClick={() => {
           setAddChat(true);
         }}
@@ -25,4 +25,4 @@ function AddChatBtn() {
   );
 }
 
-export default AddChatBtn;
+export default memo(AddChatBtn);

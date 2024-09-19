@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { getAvailableUsers } from "@/services/api/user";
 import { setAvailableUsers } from "@/redux/userSlice";
 import toast from "react-hot-toast";
@@ -15,16 +15,13 @@ function useGetAvailableUsers() {
     (async function () {
       try {
         const res = await getAvailableUsers();
-        console.log("hi",res);
-        
         dispatch(setAvailableUsers(res.data?.data));
       } catch (error) {
+        console.log(error);
         toast.error("Failed to fetch available users. Please try again later.");
       }
     })();
-  }, [dispatch]); // Include dispatch in the dependency array
-
-  // No need to return anything from a custom hook
+  }, [dispatch]);
 }
 
 export default useGetAvailableUsers;

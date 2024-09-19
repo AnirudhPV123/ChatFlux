@@ -1,19 +1,31 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { X } from "lucide-react";
+import { UserType } from "@/redux/userSlice";
+
+type UserOptionsProps = {
+  options: UserType[];
+  isGroup: boolean;
+  groupUsers: UserType[] | [];
+  user: UserType | null;
+  setUser: (value: UserType | null) => void;
+  setGroupUsers: (value: UserType[]) => void;
+  groupName: string;
+  setGroupName: (value: string) => void;
+};
 
 const UserOptions = ({
   options,
-  groupStatus,
+  isGroup,
   groupUsers,
   user,
   setGroupUsers,
   setUser,
   groupName,
   setGroupName,
-}) => {
+}: UserOptionsProps) => {
   const [value, setValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const autocompleteRef = useRef();
+  const autocompleteRef = useRef<HTMLDivElement>(null);
 
   // Filter options based on input value
   const suggestions = useMemo(() => {
@@ -26,10 +38,10 @@ const UserOptions = ({
 
   // Handle click outside of autocomplete to close suggestions
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (
         autocompleteRef.current &&
-        !autocompleteRef.current.contains(event.target)
+        !autocompleteRef.current.contains(event.target as Node)
       ) {
         setShowSuggestions(false);
       }
@@ -41,16 +53,16 @@ const UserOptions = ({
   }, []);
 
   // Handle input change
-  const handleChange = (event) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value);
     setShowSuggestions(true);
   };
 
   // Handle suggestion click
-  const handleSuggestionClick = (suggestion) => {
-    if (groupStatus) {
+  const handleSuggestionClick = (suggestion: UserType) => {
+    if (isGroup) {
       if (!groupUsers.some((u) => u._id === suggestion._id)) {
-        setGroupUsers((prev) => [...prev, suggestion]);
+        setGroupUsers([...groupUsers, suggestion]);
         setValue("");
       }
     } else {
@@ -62,24 +74,27 @@ const UserOptions = ({
 
   // Delete user from one-on-one chat
   const handleDeleteUser = () => {
-    setUser({});
+    setUser(null);
     setValue("");
     setShowSuggestions(true);
   };
 
   // Delete user from group chat
-  const handleDeleteGroupUser = (userId) => {
-    console.log("userId", userId);
+  const handleDeleteGroupUser = (userId: string) => {
     setGroupUsers(groupUsers.filter((user) => user._id !== userId));
   };
 
   // Reset form fields when group status changes
   useEffect(() => {
-    setUser({});
-    setValue("");
-    setGroupUsers([]);
-    setGroupName("");
-  }, [groupStatus]);
+    if (isGroup) {
+      setUser(null);
+      setValue("");
+    } else {
+      setGroupUsers([]);
+      setGroupName("");
+      setValue("");
+    }
+  }, [isGroup, setUser, setGroupUsers, setGroupName]);
 
   // Clear input value when groupUsers array is empty
   useEffect(() => {
@@ -88,7 +103,7 @@ const UserOptions = ({
 
   return (
     <div className="autocomplete relative" ref={autocompleteRef}>
-      {groupStatus && (
+      {isGroup && (
         <input
           type="text"
           placeholder="Enter a group name..."
@@ -99,16 +114,14 @@ const UserOptions = ({
       )}
       <input
         className="input input-bordered w-full pr-10"
-        value={user.username || value}
+        value={user?.username || value}
         onChange={handleChange}
         placeholder={
-          groupStatus
-            ? "Select group participants..."
-            : "Select a user to chat..."
+          isGroup ? "Select group participants..." : "Select a user to chat..."
         }
         onFocus={() => setShowSuggestions(true)}
       />
-      {user.username && (
+      {user?.username && (
         <X
           className="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer"
           onClick={handleDeleteUser}
@@ -117,7 +130,7 @@ const UserOptions = ({
       {showSuggestions && (
         <ul
           className="suggestions absolute mt-2 flex flex-col gap-2 rounded-lg border border-gray-600 bg-[#1D232A] px-4 py-2"
-          style={{ width: autocompleteRef.current.offsetWidth }}
+          style={{ width: autocompleteRef?.current?.offsetWidth }}
         >
           {suggestions.map((user) => (
             <li
@@ -130,7 +143,7 @@ const UserOptions = ({
           ))}
         </ul>
       )}
-      {groupStatus && (
+      {isGroup && (
         <div className="mt-2 flex flex-wrap gap-2">
           {groupUsers.map((user) => (
             <div
