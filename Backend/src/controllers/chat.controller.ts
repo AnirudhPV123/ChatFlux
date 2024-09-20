@@ -1,4 +1,6 @@
+import { redisClient } from '@/config/redisConfig';
 import { Conversation } from '@/models/conversation.model';
+import { io } from '@/socket/socket';
 import { asyncHandler } from '@/utils/asyncHandler';
 import { CustomError } from '@/utils/CustomError';
 import { CustomResponse } from '@/utils/CustomResponse';
@@ -31,7 +33,7 @@ const chatCommonAggregation = () => {
 
 // @DESC Create new chat
 // @METHOD POST
-// @PATH /chat/c/:id (id - receiverId)
+// @PATH /chat/one-on-one/:id (id - receiverId)
 // @RETURN chat details
 export const createAOneOnOneChat = asyncHandler(async (req, res, next) => {
   const senderId = (req.user as any)._id;
@@ -62,12 +64,11 @@ export const createAOneOnOneChat = asyncHandler(async (req, res, next) => {
     ...chatCommonAggregation(),
   ]);
 
-  //   TODO: testing remove this code
-  //   await Conversation.findByIdAndDelete(conversation._id);
-
   //   SOCKET.IO
-  //   const receiverSocketId = getReceiverSocketId(receiverId);
-  //   io.to(receiverSocketId).emit('newChat', chat[0]);
+  const receiverSocketId = await redisClient.get(receiverId);
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit('new-chat', chat[0]);
+  }
 
   return res.status(200).json(new CustomResponse(200, chat, 'Chat created Successfully'));
 });
@@ -99,16 +100,12 @@ export const createAGroupChat = asyncHandler(async (req, res, next) => {
     // ...chatCommonAggregation(),
   ]);
 
-  console.log('gouprchatcreate', chat);
-
-  //   let socketIds = getSocketIds();
-
-  //   conversation.participants.forEach((userId) => {
-  //     const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
-  //     if (socketId) {
-  //       io.to(socketId).emit('newChat', chat[0]);
-  //     }
-  //   });
+  conversation.participants.forEach(async (userId) => {
+    const socketId = await redisClient.get(userId.toString()); // Assuming userId directly corresponds to index in socketIds array
+    if (socketId) {
+      io.to(socketId).emit('new-chat', chat[0]);
+    }
+  });
 
   return res.status(200).json(new CustomResponse(200, chat, 'Group chat created Successfully'));
 });
@@ -308,7 +305,47 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
     groupChats.forEach((chat) => chats.push(chat));
   }
 
-  console.log('final chats', chats);
+  // console.log('final chats', chats);
 
   return res.status(200).json(new CustomResponse(200, chats, 'Chats fetched successfully'));
+});
+
+
+export const groupMembersDetails = asyncHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+
+  const result = await Conversation.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(chatId) } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'participants',
+        foreignField: '_id',
+        as: 'membersDetails',
+      },
+    },
+    {
+      $project: {
+        membersDetails: 1,
+        groupAdmin: 1,
+        isGroupChat: 1,
+      },
+    },
+    {
+      $project: {
+        isGroupChat: 1,
+        groupAdmin: 1,
+
+        'membersDetails._id': 1,
+        'membersDetails.userName': 1,
+        'membersDetails.avatar': 1,
+      },
+    },
+  ]);
+
+  console.log('get groupmend', result);
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, result, 'Group members details fetched Successfully'));
 });

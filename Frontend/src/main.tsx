@@ -7,6 +7,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { store } from "./redux/store.ts";
 import persistStore from "redux-persist/es/persistStore";
 import { Toaster } from "react-hot-toast";
+import { SocketProvider } from "./context/SocketContext.tsx";
 
 const persistor = persistStore(store);
 
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <App />
+        <SocketProvider>
+          <App />
+        </SocketProvider>
       </PersistGate>
       <Toaster />
     </Provider>

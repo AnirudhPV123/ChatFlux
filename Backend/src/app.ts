@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -11,8 +11,7 @@ import chatRouter from './routes/chat.routes';
 import passport from 'passport';
 import session from 'express-session';
 import './config/passportConfig';
-
-const app: Application = express();
+import { app } from './socket/socket';
 
 // Global Middleware
 app.use(cors(corsConfig));
@@ -45,4 +44,4 @@ app.all('*', (req, res, next) => {
 // Global Error Handler
 app.use(globalErrorHandler);
 
-export { app };
+// export { server };

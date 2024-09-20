@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { ChatType } from "./chatSlice";
 
 export type UserType = {
   _id: string;
@@ -18,11 +19,11 @@ export type UserType = {
 type UserSlice = {
   authUser: UserType | null;
   isAuthUser: boolean;
-  selectedUser: Array<{ _id: string }> | null;
   onlineUsers: UserType[] | [];
   availableUsers: UserType[] | [];
-  selectedGroup: { groupId: string } | null;
-  selectedChat: { chatId: string } | null;
+  selectedUser: ChatType | null;
+  selectedGroup: ChatType | null;
+  selectedChat: ChatType | null;
 };
 
 const initialState: UserSlice = {

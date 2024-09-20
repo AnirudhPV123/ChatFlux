@@ -25,11 +25,6 @@ const conversationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    block: [
-      {
-        blockerId: { type: mongoose.Schema.Types.ObjectId },
-      },
-    ],
   },
   { timestamps: true },
 );

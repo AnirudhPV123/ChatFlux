@@ -206,7 +206,7 @@ export const loginWithAuthProviders = async ({
   email,
   avatar,
 }: LoginWithAuthProvidersProps) => {
-  console.log('avatar', avatar);
+  // console.log('avatar', avatar);
   try {
     let user = await User.findOne({ $or: [{ providerId: providerId }, { email: email }] });
     if (!user) {
@@ -239,7 +239,7 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
   if (!user) {
     throw new CustomError(404, 'User not found');
   }
-  console.log(user);
+  // console.log(user);
 
   res.status(200).json(new CustomResponse(200, user));
 });
@@ -254,7 +254,7 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 // @PATH /user/users
 // @RETURN users
 export const getAvailableUsers = asyncHandler(async (req: Request, res: Response) => {
-  console.log("hi here");
+  // console.log("hi here");
   
   const id = (req.user as any)._id;
 
@@ -276,7 +276,7 @@ export const getAvailableUsers = asyncHandler(async (req: Request, res: Response
     },
   ]);
 
-  console.log("avoided logged in user", users);
+  // console.log("avoided logged in user", users);
 
   res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
 });
