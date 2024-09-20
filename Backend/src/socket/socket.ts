@@ -20,6 +20,7 @@ io.on('connection', async (socket) => {
 
   if (userId) {
     try {
+      await redisClient.del(userId as string);
       await redisClient.setEx(userId as string, 60 * 60, socket.id as string);
       socket.emit('welcome', { message: 'Welcome to the server socket io!' });
     } catch (error) {

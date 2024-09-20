@@ -310,7 +310,8 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
   return res.status(200).json(new CustomResponse(200, chats, 'Chats fetched successfully'));
 });
 
-
+// TODO: later optimization
+// get group member details for profile click
 export const groupMembersDetails = asyncHandler(async (req, res, next) => {
   const chatId = req.params.id;
 
@@ -337,15 +338,200 @@ export const groupMembersDetails = asyncHandler(async (req, res, next) => {
         groupAdmin: 1,
 
         'membersDetails._id': 1,
-        'membersDetails.userName': 1,
+        'membersDetails.username': 1,
         'membersDetails.avatar': 1,
       },
     },
   ]);
 
-  console.log('get groupmend', result);
-
   return res
     .status(200)
     .json(new CustomResponse(200, result, 'Group members details fetched Successfully'));
+});
+
+export const deleteChat = asyncHandler(async (req, res, next) => {
+  const id = req.params.id;
+  const userId = req.params.userId;
+
+  console.log('here:', id, userId);
+
+  const result = await Conversation.findByIdAndDelete(id);
+  console.log('deleted', result);
+
+  if (!result) {
+    return res.status(500).json(new CustomError(500, 'Server error.'));
+  }
+
+  //   SOCKET.IO
+  const receiverSocketId = await redisClient.get(userId.toString());
+
+  console.log('receiver:', receiverSocketId);
+  // send new message to receiver
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit('chat_deleted', result._id);
+  }
+
+  return res.status(200).json(new CustomResponse(200, result, 'Chat deleted Successfully'));
+});
+
+export const addUserToGroup = asyncHandler(async (req, res, next) => {
+  const { groupId, userId } = req.params;
+  console.log('groupId add', groupId);
+  console.log('usrId add', groupId);
+
+  const result = await Conversation.findOneAndUpdate(
+    { _id: new mongoose.Types.ObjectId(groupId) },
+    { $push: { participants: userId } },
+    { new: true },
+  );
+
+  if (!result) {
+    throw new CustomError(500, 'Server error.');
+  }
+
+  let conversation = await Conversation.findById(groupId);
+
+  console.log('rewsul result', result);
+  // SOCKET.IO
+
+  conversation?.participants.forEach(async (id) => {
+    // to prevent emit message to the senderItself
+
+    console.log('req.user._id:', (req.user as any)._id);
+    console.log('id:', id);
+
+    if ((req.user as any)._id.equals(id)) {
+      return;
+    }
+
+    console.log('here');
+
+    const socketId = await redisClient.get(id.toString());
+
+    console.log('id', id.toString());
+    console.log('socketId:', socketId);
+    if (socketId) {
+      // userid and groupid
+      if (id.toString() === userId) {
+        io.to(socketId).emit('add-user-to-group', userId, result);
+      } else {
+        console.log('result to others', result._id);
+        io.to(socketId).emit('add-user-to-group', userId, result._id);
+      }
+    }
+  });
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId, userId }, 'User added to group Successfully'));
+});
+
+// do further optimzation
+export const deleteGroup = asyncHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+  const userId = (req.user as any)._id;
+
+  let conversation = await Conversation.findById(chatId);
+
+  const result = await Conversation.findByIdAndDelete(chatId);
+
+  if (result) {
+    // SOCKET.IO
+
+    conversation?.participants.forEach(async (id) => {
+      // to prevent emit message to the senderItself
+      if ((req.user as any)._id.equals(id)) {
+        return;
+      }
+
+      const socketId = await redisClient.get(id.toString());
+      if (socketId) {
+        io.to(socketId).emit('delete-group', result._id);
+      }
+    });
+  }
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: result?._id }, 'Group deleted Successfully'));
+});
+
+export const leaveGroup = asyncHandler(async (req, res, next) => {
+  const chatId = req.params.id;
+  const userId = (req.user as any)._id;
+
+  const result = await Conversation.findByIdAndUpdate(
+    { _id: new mongoose.Types.ObjectId(chatId) },
+    { $pull: { participants: userId } },
+    { new: true },
+  );
+
+  if (!result) {
+    throw new CustomError(500, 'Server error.');
+  }
+
+  // SOCKET.IO
+  let conversation = await Conversation.findById(chatId);
+
+  conversation?.participants.forEach(async (userId) => {
+    // to prevent emit message to the senderItself
+    if ((req.user as any)._id.equals(userId)) {
+      return;
+    }
+
+    const socketId = await redisClient.get(userId.toString());
+    if (socketId) {
+      io.to(socketId).emit('leave-group', userId, result._id);
+    }
+  });
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: result?._id }, 'Leaved group Successfully'));
+});
+
+// almost same has leaveGroup
+export const removeUserFromGroup = asyncHandler(async (req, res, next) => {
+  const chatId = req.params.groupId;
+  const userId = req.params.userId;
+
+  console.log('remove userId', userId);
+  // do like this or if we get converstion after result we get only the updated conversation
+
+  const result = await Conversation.findByIdAndUpdate(
+    { _id: new mongoose.Types.ObjectId(chatId) },
+    { $pull: { participants: userId } },
+    { new: true },
+  );
+
+  if (!result) {
+    throw new CustomError(500, 'Server error.');
+  }
+
+  let conversation = await Conversation.findById(chatId);
+
+  // this is done because the user is already deleted so need to do it seperately
+  const socketId = await redisClient.get(userId.toString());
+  if (socketId) io.to(socketId).emit('remove-user-from-group', userId, result._id);
+
+  // SOCKET.IO
+  conversation?.participants.forEach(async (id) => {
+    // to prevent emit message to the senderItself
+    if ((req.user as any)._id.equals(id)) {
+      return;
+    }
+
+    console.log('id', id.toString());
+
+    const socketId = await redisClient.get(id.toString());
+    if (socketId) {
+      // userid and groupid
+      // here the user is already deleted so the message will not be sent to the user so do it seperately
+      io.to(socketId).emit('remove-user-from-group', userId, result._id);
+    }
+  });
+
+  return res
+    .status(200)
+    .json(new CustomResponse(200, { groupId: chatId }, 'User removed from group Successfully'));
 });

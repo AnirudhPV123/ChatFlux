@@ -37,6 +37,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     setSocket(socketio);
 
+    // Log socket ID after connecting
+    socketio.on("connect", () => {
+      console.log("Connected with socket ID:", socketio.id);
+    });
+
     return () => {
       socketio.disconnect();
     };

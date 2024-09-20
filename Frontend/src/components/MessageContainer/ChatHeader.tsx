@@ -89,6 +89,21 @@ function ChatHeader() {
     }
   };
 
+  const handleDeleteOneOnOneChat = async () => {
+    try {
+      const result = await deleteChat(selectedChat?._id, selectedUser?._id);
+
+      const updatedChats = chats.filter(
+        (chat) => chat?._id !== result?.data?.data?._id,
+      );
+      dispatch(setChats(updatedChats));
+      toast.success(`You have deleted ${selectedUser?.username}`);
+      dispatch(setSelectedUser(null));
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
+
   const handleDeleteGroup = async () => {
     try {
       const result = await deleteGroup(selectedChat?._id);
@@ -283,12 +298,22 @@ function ChatHeader() {
           >
             Delete conversation
           </button> */}
-          {selectedChat?.groupAdmin !== authUser?._id && (
+          {selectedChat?.isGroupChat &&
+            selectedChat?.groupAdmin !== authUser?._id && (
+              <button
+                className="btn btn-outline btn-error mt-4 w-full"
+                onClick={handleLeaveGroup}
+              >
+                Leave group
+              </button>
+            )}
+
+          {!selectedChat?.isGroupChat && (
             <button
               className="btn btn-outline btn-error mt-4 w-full"
-              onClick={handleLeaveGroup}
+              onClick={handleDeleteOneOnOneChat}
             >
-              Leave group
+              Delete Chat
             </button>
           )}
 

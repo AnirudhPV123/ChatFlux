@@ -19,8 +19,11 @@ const createAGroupChat = async ({ participants, groupName }) => {
   return await apiClient.post(`/api/v1/chat/group`, data);
 };
 
-const deleteChat = async (id) => {
-  return await apiClient.delete(`/api/v1/chat/delete/${id}`);
+const deleteChat = async (chatId, userId) => {
+  return await apiClient.delete(`/api/v1/chat/delete/${chatId}/${userId}`);
+  // const data = { chatId, userId };
+// TODO: for sometime need userId to send notification
+  // return await apiClient.delete(`/api/v1/chat/delete/`, data);
 };
 
 const leaveGroup = async (id) => {
