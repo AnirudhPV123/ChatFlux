@@ -405,7 +405,7 @@ export const addUserToGroup = asyncHandler(async (req, res, next) => {
     }
 
     console.log('here');
-
+ 
     const socketId = await redisClient.get(id.toString());
 
     console.log('id', id.toString());

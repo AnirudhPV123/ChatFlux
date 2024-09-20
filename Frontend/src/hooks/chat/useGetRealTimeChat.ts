@@ -4,6 +4,7 @@ import { useSocket } from "@/context/SocketContext";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
 import { setGroupMembers } from "@/redux/temporarySlice";
 import { getGroupMembersDetails } from "@/services/api/chat";
+import { setSelectedGroup, setSelectedUser } from "@/redux/userSlice";
 
 const useGetRealTimeChat = () => {
   const { chats } = useTypedSelector((store) => store.chat);
@@ -39,6 +40,7 @@ const useGetRealTimeChat = () => {
 
       const updatedChats = chats.filter((chat: ChatType) => chat?._id !== id);
       dispatch(setChats(updatedChats));
+      dispatch(setSelectedUser(null));
     };
 
     if (socket) {
@@ -60,6 +62,7 @@ const useGetRealTimeChat = () => {
       let updatedChats;
       if (authUser?._id === userId) {
         updatedChats = chats.filter((chat) => chat?._id !== groupId);
+        dispatch(setSelectedGroup(null));
       } else {
         updatedChats = chats.map((chat) =>
           chat?._id === groupId

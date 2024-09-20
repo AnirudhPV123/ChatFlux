@@ -3,6 +3,7 @@ import { asyncHandler } from '@/utils/asyncHandler';
 import { CustomError } from '@/utils/CustomError';
 import { CustomResponse } from '@/utils/CustomResponse';
 import { generateTokens } from '@/utils/generateTokens';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import {
   forgotPasswordGenerateOtpValidator,
   emailAndPasswordValidator,
@@ -15,6 +16,7 @@ import { getRedisValue } from '@/utils/redisOperations';
 import { handleOtpProcess } from '@/utils/handleOtpProcess';
 import { validateRequest } from '@/utils/validateRequest';
 import { LoginWithAuthProvidersProps } from './types';
+import mongoose from 'mongoose';
 
 // Generate otp and save user data and otp in redis session
 export const signUpGenerateOtp = asyncHandler(async (req: Request, res: Response) => {
@@ -255,7 +257,7 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 // @RETURN users
 export const getAvailableUsers = asyncHandler(async (req: Request, res: Response) => {
   // console.log("hi here");
-  
+
   const id = (req.user as any)._id;
 
   const users = await User.aggregate([
@@ -279,4 +281,33 @@ export const getAvailableUsers = asyncHandler(async (req: Request, res: Response
   // console.log("avoided logged in user", users);
 
   res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
+});
+
+// Refresh Access Token
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new CustomError(401, 'Refresh token required.');
+  }
+
+  const decodedToken = jwt.verify(
+    incomingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET_KEY as string,
+  ) as JwtPayload;
+
+  const user = await User.findById(decodedToken?._id);
+
+  if (!user || user?.refreshToken !== incomingRefreshToken) {
+    throw new CustomError(403, 'Invalid or expired refresh token.');
+  }
+
+  const { accessToken } = await generateTokens({
+    userId: user?._id as string,
+  });
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, options)
+    .json(new CustomResponse(200, 'Access token refreshed successfully'));
 });

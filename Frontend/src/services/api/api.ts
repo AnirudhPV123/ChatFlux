@@ -11,34 +11,34 @@ const api = axios.create({
   timeout: 120000,
 });
 
-// const handleUnauthorized = () => {
-//   window.location.href = "/login";
-// };
+const handleUnauthorized = () => {
+  window.location.href = "/login";
+};
 
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const { status } = error.response || {};
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const { status } = error.response || {};
 
-//     if (status === 401) {
-//       try {
-//         // Attempt to refresh the token
-//         await api.post("/api/v1/users/refresh-token");
+    if (status === 401) {
+      try {
+        // Attempt to refresh the token
+        await api.post("/api/v1/users/refresh-token");
 
-//         // Retry the original request with the new token
-//         const originalRequest = error.config;
-//         return api.request(originalRequest);
-//       } catch (refreshError) {
-//         // Handle token refresh failure
-//         handleUnauthorized();
-//         return Promise.reject(refreshError);
-//       }
-//     }
+        // Retry the original request with the new token
+        const originalRequest = error.config;
+        return api.request(originalRequest);
+      } catch (refreshError) {
+        // Handle token refresh failure
+        handleUnauthorized();
+        return Promise.reject(refreshError);
+      }
+    }
 
-//     // handle other errors
-//     handleUnauthorized();
-//     return Promise.reject(error);
-//   },
-// );
+    //     // handle other errors
+    handleUnauthorized();
+    return Promise.reject(error);
+  },
+);
 
 export default api;

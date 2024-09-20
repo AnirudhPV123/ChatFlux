@@ -3,6 +3,7 @@ import ChatHeader from "./ChatHeader";
 // import SendInput from "./SendInput";
 import { useTypedSelector } from "@/hooks/useRedux";
 
+
 function MessageContainer() {
   const { selectedUser, selectedGroup, authUser } = useTypedSelector(
     (store) => store.user,
@@ -27,7 +28,9 @@ function MessageContainer() {
       <ChatHeader />
       {/* 
       <Messages />
-      <SendInput /> */}
+      <SendInput />
+       */}
+
     </div>
   );
 }

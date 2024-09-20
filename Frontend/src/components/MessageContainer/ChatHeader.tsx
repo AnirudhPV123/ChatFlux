@@ -65,6 +65,7 @@ function ChatHeader() {
         !profilRef.current.contains(event.target)
       ) {
         setShowChatDetails(false);
+        setShowAddUsersToGroup(false);
       }
     };
     document.addEventListener("click", handleClickOutside);
