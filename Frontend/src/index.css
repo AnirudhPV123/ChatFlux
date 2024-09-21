@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom dark mode for SweetAlert */
+.swal-modal {
+  background-color: #1d232a;
+  color: white;
+  border-radius: 1rem;
+}
+
+.swal-title {
+  color: white;
+}
+
+.swal-text {
+  color: #ddd;
+}
+
+.swal-icon--warning {
+  border-color: #f8bb86;
+}
+
+.swal-icon--warning__body {
+  fill: #f8bb86;
+}

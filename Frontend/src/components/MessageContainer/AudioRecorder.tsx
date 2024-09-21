@@ -30,7 +30,7 @@ function AudioRecorderMic({
   }, [isAudioRecording]);
 
   return (
-    <div className="flex items-center gap-2 mr-2">
+    <div className="mr-2 flex items-center gap-2">
       <AudioRecorder
         onRecordingComplete={addAudioElement}
         audioTrackConstraints={{

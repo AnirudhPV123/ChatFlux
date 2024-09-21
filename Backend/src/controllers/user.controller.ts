@@ -64,16 +64,15 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     throw new CustomError(401, 'Invalid OTP.');
   }
 
-  const maleProfilePhoto = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-  const femaleProfilePhoto = `https://avatar.iran.liara.run/public/girl?username=${username}`;
-
+  // const maleProfilePhoto = `https://avatar.iran.liara.run/public/boy?username=${username}`;
+  // const femaleProfilePhoto = `https://avatar.iran.liara.run/public/girl?username=${username}`;
   const createdUser: UserType | null = await User.create({
     username,
     email,
     password,
     dateOfBirth,
     gender,
-    avatar: gender === 'male' ? maleProfilePhoto : femaleProfilePhoto,
+    // avatar: gender === 'male' ? maleProfilePhoto : femaleProfilePhoto,
   });
 
   const { accessToken, refreshToken } = await generateTokens({

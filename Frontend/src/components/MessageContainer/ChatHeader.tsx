@@ -1,5 +1,7 @@
 import { ArrowBigLeft, Trash2, UserPlus } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import swal from "sweetalert";
+
 import {
   setSelectedChat,
   setSelectedGroup,
@@ -18,7 +20,6 @@ import { setChats } from "@/redux/chatSlice";
 import { setGroupMembers } from "@/redux/temporarySlice";
 import useGetAvailableUsers from "@/hooks/chat/useGetAvailableUsers";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
-
 
 function ChatHeader() {
   useGetAvailableUsers();
@@ -197,12 +198,27 @@ function ChatHeader() {
           onClick={handleBackClick}
         />
         <div
-          className="mr-4 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-primary"
+          className="mr-4 flex h-12 w-12 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary"
           ref={profilRef}
           onClick={handleChatDetails}
         >
           {/* conditional avatar setup */}
-          {selectedUser && <img src={selectedUser?.avatar} alt="" />}
+          {selectedUser && (
+            <>
+              {selectedUser?.avatar ? (
+                <img
+                  src={selectedUser?.avatar}
+                  alt="profile"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <h2 className="text-2xl font-semibold text-black">
+                  {selectedUser?.username.charAt(0).toUpperCase()}
+                </h2>
+              )}
+            </>
+          )}
+
           {selectedGroup && (
             <h2 className="text-2xl font-semibold text-black">
               {selectedGroup?.groupName.charAt(0).toUpperCase()}
@@ -304,7 +320,20 @@ function ChatHeader() {
             selectedChat?.groupAdmin !== authUser?._id && (
               <button
                 className="btn btn-outline btn-error mt-4 w-full"
-                onClick={handleLeaveGroup}
+                // onClick={handleLeaveGroup}
+                onClick={() => {
+                  swal({
+                    title: "Are you sure?",
+                    text: "Are you sure that you want to leave this group?",
+                    icon: "warning",
+                    buttons: ["Cancel", "OK"], // Cancel and OK buttons
+                    dangerMode: true,
+                  }).then((willDelete) => {
+                    if (willDelete) {
+                      handleLeaveGroup();
+                    }
+                  });
+                }}
               >
                 Leave group
               </button>
@@ -313,7 +342,20 @@ function ChatHeader() {
           {!selectedChat?.isGroupChat && (
             <button
               className="btn btn-outline btn-error mt-4 w-full"
-              onClick={handleDeleteOneOnOneChat}
+              // onClick={handleDeleteOneOnOneChat}
+              onClick={() => {
+                swal({
+                  title: "Are you sure?",
+                  text: "Are you sure that you want to delete this chat?",
+                  icon: "warning",
+                  buttons: ["Cancel", "OK"], // Cancel and OK buttons
+                  dangerMode: true,
+                }).then((willDelete) => {
+                  if (willDelete) {
+                    handleDeleteOneOnOneChat();
+                  }
+                });
+              }}
             >
               Delete Chat
             </button>
@@ -331,7 +373,20 @@ function ChatHeader() {
           {selectedChat?.groupAdmin === authUser?._id && (
             <button
               className="btn btn-outline btn-error mt-4 w-full"
-              onClick={handleDeleteGroup}
+              // onClick={handleDeleteGroup}
+              onClick={() => {
+                swal({
+                  title: "Are you sure?",
+                  text: "Are you sure that you want to delete this group?",
+                  icon: "warning",
+                  buttons: ["Cancel", "OK"], // Cancel and OK buttons
+                  dangerMode: true,
+                }).then((willDelete) => {
+                  if (willDelete) {
+                    handleDeleteGroup();
+                  }
+                });
+              }}
             >
               Delete group
             </button>

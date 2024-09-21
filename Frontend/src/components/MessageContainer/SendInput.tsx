@@ -253,13 +253,15 @@ function SendInput() {
           onSubmit={handleSendMessage}
           className="flex grow items-center gap-2"
         >
-          <input
-            type="text"
-            className="input input-bordered grow border-gray-500"
-            placeholder="Message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+
+            <input
+              type="text"
+              className="input input-bordered grow border-gray-500"
+              placeholder="Message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+
           <AudioRecorderMic
             isAudioRecording={isAudioRecording}
             setIsAudioRecording={setIsAudioRecording}
