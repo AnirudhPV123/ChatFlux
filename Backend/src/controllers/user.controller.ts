@@ -284,30 +284,68 @@ export const getAvailableUsers = asyncHandler(async (req: Request, res: Response
 });
 
 // Refresh Access Token
+// export const refreshAccessToken = asyncHandler(async (req, res) => {
+//   const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+//   if (!incomingRefreshToken) {
+//     throw new CustomError(401, 'Refresh token required.');
+//   }
+
+//   const decodedToken = jwt.verify(
+//     incomingRefreshToken,
+//     process.env.REFRESH_TOKEN_SECRET_KEY as string,
+//   ) as JwtPayload;
+
+//   const user = await User.findById(decodedToken?._id);
+
+//   if (!user || user?.refreshToken !== incomingRefreshToken) {
+//     throw new CustomError(403, 'Invalid or expired refresh token.');
+//   }
+
+//   const { accessToken } = await generateTokens({
+//     userId: user?._id as string,
+//   });
+
+//   return res
+//     .status(200)
+//     .cookie('accessToken', accessToken, options)
+//     .json(new CustomResponse(200, 'Access token refreshed successfully'));
+// });
+
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    throw new CustomError(401, 'Refresh token required.');
+    console.log('here');
+
+    throw new CustomError(403, 'Refresh token required.');
   }
+  console.log('step1');
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET_KEY as string,
+    ) as JwtPayload;
 
-  const decodedToken = jwt.verify(
-    incomingRefreshToken,
-    process.env.REFRESH_TOKEN_SECRET_KEY as string,
-  ) as JwtPayload;
+    console.log('step2');
+    console.log(decodedToken);
 
-  const user = await User.findById(decodedToken?._id);
+    const user = await User.findById(decodedToken._id);
+    console.log('step3');
+    console.log(user);
+    if (!user || user?.refreshToken !== incomingRefreshToken) {
+      throw new CustomError(403, 'Invalid or expired refresh token.');
+    }
 
-  if (!user || user?.refreshToken !== incomingRefreshToken) {
+    const { accessToken } = await generateTokens({
+      userId: user._id as string,
+    });
+
+    return res
+      .status(200)
+      .cookie('accessToken', accessToken, options)
+      .json(new CustomResponse(200, 'Access token refreshed successfully'));
+  } catch (error) {
     throw new CustomError(403, 'Invalid or expired refresh token.');
   }
-
-  const { accessToken } = await generateTokens({
-    userId: user?._id as string,
-  });
-
-  return res
-    .status(200)
-    .cookie('accessToken', accessToken, options)
-    .json(new CustomResponse(200, 'Access token refreshed successfully'));
 });

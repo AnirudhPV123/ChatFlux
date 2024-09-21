@@ -32,6 +32,7 @@ router.route('/logout').get(verifyJWT, logoutUser);
 
 router.route('/refresh-token').post(refreshAccessToken);
 
+
 // google login
 router.route('/google').get(googleLogin);
 router.route('/google/callback').get(googleLoginCallback);
