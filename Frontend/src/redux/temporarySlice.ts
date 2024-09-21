@@ -9,7 +9,7 @@ type InitialState = {
 
 const initialState = {
   chatSearch: [],
-  // messageReplyDetails: { status: false }, //reply message details (messageId,message owner id),
+  messageReplyDetails: { status: false }, //reply message details (messageId,message owner id),
   groupMembers: null,
   // selectedChat:null
 };
@@ -21,9 +21,9 @@ const temporarySlice = createSlice({
     setChatSearch: (state, action) => {
       state.chatSearch = action.payload;
     },
-    // setMessageReplyDetails: (state, action) => {
-    //   state.messageReplyDetails = action.payload;
-    // },
+    setMessageReplyDetails: (state, action) => {
+      state.messageReplyDetails = action.payload;
+    },
     // setSelectedChat:(state,action)=>{
     //   state.selectedChat=action.payload
     // }
@@ -32,5 +32,6 @@ const temporarySlice = createSlice({
     },
   },
 });
-export const { setChatSearch, setGroupMembers } = temporarySlice.actions;
+export const { setChatSearch, setGroupMembers, setMessageReplyDetails } =
+  temporarySlice.actions;
 export default temporarySlice.reducer;

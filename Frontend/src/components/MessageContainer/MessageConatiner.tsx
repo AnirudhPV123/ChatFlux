@@ -2,7 +2,8 @@
 import ChatHeader from "./ChatHeader";
 // import SendInput from "./SendInput";
 import { useTypedSelector } from "@/hooks/useRedux";
-
+import SendInput from "./SendInput";
+import Messages from "./Messages";
 
 function MessageContainer() {
   const { selectedUser, selectedGroup, authUser } = useTypedSelector(
@@ -26,11 +27,8 @@ function MessageContainer() {
   return (
     <div className={`flex h-screen w-full flex-col sm:w-2/4 md:w-3/5 lg:w-2/3`}>
       <ChatHeader />
-      {/* 
       <Messages />
       <SendInput />
-       */}
-
     </div>
   );
 }

@@ -12,6 +12,7 @@ const api = axios.create({
 });
 
 const handleUnauthorized = () => {
+  localStorage.removeItem("chat-app");
   window.location.href = "/login";
 };
 
@@ -30,7 +31,9 @@ api.interceptors.response.use(
         return api.request(originalRequest);
       } catch (refreshError) {
         // Handle token refresh failure
+        console.log("error", refreshError);
         handleUnauthorized();
+
         return Promise.reject(refreshError);
       }
     }
