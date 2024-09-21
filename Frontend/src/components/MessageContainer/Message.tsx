@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import moment from "moment";
 import {
@@ -8,7 +8,7 @@ import {
   MessageCircleReply,
   Trash2,
 } from "lucide-react";
-import { setMessageReplyDetails } from "../../redux/temporarySlice";
+import { setMessageReplyDetails } from "@/redux/temporarySlice";
 import { deleteMessage } from "@/services/api/message";
 import { setDeleteMessage } from "@/redux/messageSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
@@ -31,7 +31,7 @@ function Message({ message }) {
   const scroll = useRef();
   const dispatch = useTypedDispatch();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // dynamically set changes based on isSender
     if (authUser?._id === message?.senderId) setIsSender(true);
     else setIsSender(false);
@@ -239,7 +239,9 @@ function Message({ message }) {
           )}
         </div>
       </div>
-      <div className="chat-footer opacity-50">{message?.status}</div>
+      {authUser?._id !== message?.receiverId && (
+        <div className="chat-footer opacity-50">{message?.status}</div>
+      )}
     </div>
   );
 }

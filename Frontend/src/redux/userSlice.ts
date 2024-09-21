@@ -47,6 +47,11 @@ const userSlice = createSlice({
     clearUserSlice: (state) => {
       state.authUser = null;
       state.isAuthUser = false;
+      state.selectedUser = null;
+      state.selectedGroup = null;
+      state.onlineUsers = [];
+      state.availableUsers = [];
+      state.selectedChat = null;
     },
 
     setSelectedUser: (state, action) => {

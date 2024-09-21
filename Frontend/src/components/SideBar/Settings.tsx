@@ -4,19 +4,20 @@ import { logoutUser } from "@/services/api/auth";
 import { setResetMessagesState } from "@/redux/messageSlice";
 import { setResetChatsState } from "@/redux/chatSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import { resetTemporarySlice } from "@/redux/temporarySlice";
 
 function Settings() {
   const { authUser } = useTypedSelector((store) => store.user);
   const dispatch = useTypedDispatch();
 
   console.log(authUser);
-  
 
   const handleLogout = async () => {
     await logoutUser();
     dispatch(clearUserSlice());
     dispatch(setResetMessagesState());
     dispatch(setResetChatsState());
+    dispatch(resetTemporarySlice());
   };
 
   return (

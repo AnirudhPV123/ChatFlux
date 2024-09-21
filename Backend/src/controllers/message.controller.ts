@@ -3,9 +3,10 @@ import { CustomError } from '@/utils/CustomError';
 import { CustomResponse } from '@/utils/CustomResponse';
 import { Conversation } from '@/models/conversation.model';
 import { Message } from '@/models/message.model';
-import { io } from '@/socket/socket.js';
+import { io } from '@/socket/socket';
 import mongoose from 'mongoose';
 import { uploadOnCloudinary } from '@/utils/cloudinary';
+import { redisClient } from '@/config/redisConfig';
 
 // @DESC Send a message between users and handle socket communication
 // @METHOD POST
@@ -85,11 +86,14 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
 
   //   SOCKET.IO
   // const receiverSocketId = getReceiverSocketId(receiverId);
+  const receiverSocketId = await redisClient.get(receiverId.toString());
+
+  console.log('receiverSocketId:', receiverSocketId);
 
   // // send new message to receiver
-  // if (receiverSocketId) {
-  //   io.to(receiverSocketId).emit('new_message', newMessage);
-  // }
+  if (receiverSocketId) {
+    io.to(receiverSocketId).emit('new_message', newMessage);
+  }
 
   return res.status(201).json(new CustomResponse(201, newMessage));
 });
@@ -204,22 +208,20 @@ export const sendGroupMessage = asyncHandler(async (req, res, next) => {
   //   SOCKET.IO
   // let socketIds = getSocketIds();
 
-  // conversation.participants.forEach((userId) => {
-  //   // to prevent emit message to the senderItself
-  //   if (req.user._id.equals(userId)) {
-  //     return;
-  //   }
+  conversation?.participants.forEach(async (userId) => {
+    // to prevent emit message to the senderItself
+    if ((req.user as any)._id.equals(userId)) {
+      return;
+    }
 
-  //   const socketId = socketIds[userId]; // Assuming userId directly corresponds to index in socketIds array
-  //   if (socketId) {
-  //     io.to(socketId).emit('new_message', newMessage[0]);
-  //   }
-  // });
+    const socketId = await redisClient.get(userId.toString());
+    if (socketId) {
+      io.to(socketId).emit('new_message', newMessage2[0]);
+    }
+  });
 
   res.status(201).json(new CustomResponse(201, newMessage2[0]));
 });
-
-
 
 // @DESC Get messages between the specific users
 // @METHOD GET
@@ -249,15 +251,14 @@ export const getMessage = asyncHandler(async (req, res, next) => {
   // the user call getMessage is sender and other is receiver thats why we use like this
   // actually receiverId is the senderId of message
   // TODO: this when user open the chat then get message call then send seen status to sender
-  // const socketId = getReceiverSocketId(receiverId);
+  const socketId = await redisClient.get(receiverId.toString());
   // // send status update to sender
-  // if (updateStatus.modifiedCount > 0) {
-  //   io.to(socketId).emit('message_status_update_from_backend_to_sender', conversation._id, 'seen');
-  // }
+  if (updateStatus.modifiedCount > 0 && socketId) {
+    io.to(socketId).emit('message_status_update_from_backend_to_sender', conversation?._id, 'seen');
+  }
 
   return res.status(200).json(new CustomResponse(200, conversation?.messages));
 });
-
 
 // @DESC Get group messages
 // @METHOD GET
@@ -345,6 +346,50 @@ export const getGroupMessage = asyncHandler(async (req, res, next) => {
   console.log('messagegroupK', conversation[0].messages);
 
   res.status(200).json(new CustomResponse(200, conversation[0].messages));
+});
+
+export const deleteMessage = asyncHandler(async (req, res, next) => {
+  const messageId = req.params.messageId;
+  const id = req.params.id;
+
+  const deletedMessage = await Message.findByIdAndUpdate(
+    messageId,
+    { $unset: { message: '', messageReplyDetails: '' } },
+    { new: true },
+  );
+
+  if (!deletedMessage) {
+    return res.status(500).json(new CustomError(500, 'Server error.'));
+  }
+
+  console.log(deletedMessage);
+
+  if (deletedMessage?.conversationId) {
+    //   SOCKET.IO
+    const receiverSocketId = await redisClient.get(id.toString());
+
+    // send new message to receiver
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('message_deleted', deletedMessage._id);
+    }
+  } else {
+    // SOCKET.IO
+    let conversation = await Conversation.findById(id);
+
+    conversation?.participants.forEach(async (userId) => {
+      // to prevent emit message to the senderItself
+      if ((req.user as any)._id.equals(userId)) {
+        return;
+      }
+
+      const socketId = await redisClient.get(userId.toString());
+      if (socketId) {
+        io.to(socketId).emit('message_deleted', deletedMessage._id);
+      }
+    });
+  }
+
+  return res.status(201).json(new CustomResponse(201, 'Message deleted successfully'));
 });
 
 // // @DESC Get messages between the specific users

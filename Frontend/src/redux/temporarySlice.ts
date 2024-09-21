@@ -30,8 +30,17 @@ const temporarySlice = createSlice({
     setGroupMembers: (state, action) => {
       state.groupMembers = action.payload;
     },
+    resetTemporarySlice: (state) => {
+      state.chatSearch = [];
+      state.messageReplyDetails = { status: false };
+      state.groupMembers = null;
+    },
   },
 });
-export const { setChatSearch, setGroupMembers, setMessageReplyDetails } =
-  temporarySlice.actions;
+export const {
+  setChatSearch,
+  setGroupMembers,
+  setMessageReplyDetails,
+  resetTemporarySlice,
+} = temporarySlice.actions;
 export default temporarySlice.reducer;
