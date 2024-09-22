@@ -1,16 +1,7 @@
 import { Conversation } from '@/models/conversation.model';
 import { Message } from '@/models/message.model';
-import { getUserSocketId, io } from '@/socket/socket';
-import { asyncHandler, CustomError, CustomResponse } from '@/utils';
+import { asyncHandler, CustomError, CustomResponse, emitSocketEvent } from '@/utils';
 import mongoose from 'mongoose';
-
-// Helper function for emitting socket events
-const emitSocketEvent = async (userId: string, event: string, data: any, data2?: any) => {
-  const socketId = await getUserSocketId(userId);
-  if (socketId) {
-    io.to(socketId).emit(event, data, data2);
-  }
-};
 
 // Common aggregation for chat participants
 const chatCommonAggregation = () => {

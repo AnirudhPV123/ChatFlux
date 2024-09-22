@@ -10,3 +10,4 @@ export { default as sendEmailVerification } from './sendEmailVerification';
 export { default as validateRequest } from './validateRequest';
 export { getRedisValue, setRedisValue } from './redisOperations';
 export { default as handleAuthCallback } from './handleAuthCallback';
+export { default as emitSocketEvent } from './emitSocketEvent';
