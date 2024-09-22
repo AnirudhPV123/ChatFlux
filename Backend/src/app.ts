@@ -3,26 +3,20 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import corsConfig from './config/corsConfig';
 import { globalErrorHandler } from './middlewares/globalErrorHandler.middleware';
-import { CustomError } from './utils/CustomError';
+import { CustomError } from './utils';
+import passport from 'passport';
+import './config/passportConfig';
+import { app } from './socket/socket';
+import { corsConfig, sessionConfig } from './config';
+// routers
 import userRouter from './routes/user.routes';
 import chatRouter from './routes/chat.routes';
 import messageRouter from './routes/message.routes';
-import passport from 'passport';
-import session from 'express-session';
-import './config/passportConfig';
-import { app } from './socket/socket';
 
 // Global Middleware
 app.use(cors(corsConfig));
-app.use(
-  session({
-    secret: process.env.SECTION_SECRET_KEY as string,
-    resave: false,
-    saveUninitialized: true,
-  }),
-);
+app.use(sessionConfig);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(helmet());
@@ -35,7 +29,7 @@ app.use(morgan('combined'));
 // Route Handlers
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/chat', chatRouter);
-app.use('/api/v1/message',messageRouter)
+app.use('/api/v1/message', messageRouter);
 
 // Unknown Endpoint Handler
 app.all('*', (req, res, next) => {
@@ -45,5 +39,3 @@ app.all('*', (req, res, next) => {
 
 // Global Error Handler
 app.use(globalErrorHandler);
-
-// export { server };

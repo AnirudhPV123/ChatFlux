@@ -1,6 +1,5 @@
 import { loginWithAuthProviders } from '../controllers/user.controller';
-import { CustomError } from '../utils/CustomError';
-import { logger } from '../utils/logger';
+import { CustomError, logger } from '@/utils';
 import passport, { DoneCallback, Profile } from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GithubStrategy } from 'passport-github2';

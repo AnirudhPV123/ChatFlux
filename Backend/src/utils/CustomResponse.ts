@@ -12,4 +12,4 @@ class CustomResponse<T> {
   }
 }
 
-export { CustomResponse };
+export default CustomResponse;

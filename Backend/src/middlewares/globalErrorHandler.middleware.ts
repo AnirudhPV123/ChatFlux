@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils';
 
 // Define a custom error interface
 interface AppError extends Error {
@@ -27,7 +27,7 @@ const globalErrorHandler = (error: AppError, req: Request, res: Response, next: 
 
   // Send a detailed error response in development, but a generic one in production
   if (process.env.NODE_ENV === 'development') {
-    res.status(statusCode).json({
+    res.status(statusCode).json({ 
       statusCode,
       status,
       isOperational,

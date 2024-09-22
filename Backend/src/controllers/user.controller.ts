@@ -1,8 +1,12 @@
 import { UserType, User } from '@/models/user.model';
-import { asyncHandler } from '@/utils/asyncHandler';
-import { CustomError } from '@/utils/CustomError';
-import { CustomResponse } from '@/utils/CustomResponse';
-import { generateTokens } from '@/utils/generateTokens';
+import {
+  asyncHandler,
+  CustomError,
+  CustomResponse,
+  generateTokens,
+  handleOtpProcess,
+  validateRequest,
+} from '@/utils';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import {
   forgotPasswordGenerateOtpValidator,
@@ -10,39 +14,33 @@ import {
   signUpGenerateOtpValidator,
   emailAndOtpValidator,
 } from '@/utils/validators/userValidators';
-import { cookieConfig as options } from '@/config/cookieConfig';
+import { cookieConfig as options } from '@/config';
 import { Request, Response } from 'express';
 import { getRedisValue } from '@/utils/redisOperations';
-import { handleOtpProcess } from '@/utils/handleOtpProcess';
-import { validateRequest } from '@/utils/validateRequest';
 import { LoginWithAuthProvidersProps } from './types';
-import mongoose from 'mongoose';
 
-// Generate otp and save user data and otp in redis session
+// Generate OTP and save user data and OTP in Redis session
 export const signUpGenerateOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, ...userData } = validateRequest({
     schema: signUpGenerateOtpValidator,
     data: req.body,
   });
 
-  const existingUser: UserType | null = await User.findOne({ email });
-
-  if (existingUser) {
+  if (await User.findOne({ email })) {
     throw new CustomError(409, 'Email already exists.');
   }
 
   handleOtpProcess({ email, expiryTime: 60 * 5, data: userData });
-
   return res.status(200).json(new CustomResponse(201, 'OTP generated successfully.'));
 });
 
-// Verify otp with otp in redis session and create user
+// Verify OTP with Redis and create user
 export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = validateRequest({ schema: emailAndOtpValidator, data: req.body });
 
-  const redisData: object | null = await getRedisValue(email as string);
+  const redisData = await getRedisValue(email as string);
 
-  if (redisData === null) {
+  if (!redisData) {
     throw new CustomError(404, 'OTP expired.');
   }
 
@@ -64,15 +62,12 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     throw new CustomError(401, 'Invalid OTP.');
   }
 
-  // const maleProfilePhoto = `https://avatar.iran.liara.run/public/boy?username=${username}`;
-  // const femaleProfilePhoto = `https://avatar.iran.liara.run/public/girl?username=${username}`;
-  const createdUser: UserType | null = await User.create({
+  const createdUser = await User.create({
     username,
     email,
     password,
     dateOfBirth,
     gender,
-    // avatar: gender === 'male' ? maleProfilePhoto : femaleProfilePhoto,
   });
 
   const { accessToken, refreshToken } = await generateTokens({
@@ -98,31 +93,29 @@ export const signUpVerifyOtp = asyncHandler(async (req: Request, res: Response) 
     .json(new CustomResponse(201, userWithoutSensitiveInfo, 'User registered successfully.'));
 });
 
-// Generate otp and save key as email and otp in redis session
+// Generate OTP for password reset
 export const forgotPasswordGenerateOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email } = validateRequest({ schema: forgotPasswordGenerateOtpValidator, data: req.body });
 
-  const user: UserType | null = await User.findOne({ email });
+  const user = await User.findOne({ email });
   if (!user || user?.provider) {
     throw new CustomError(404, 'User not found.');
   }
 
   handleOtpProcess({ email, expiryTime: 60 * 5, data: {} });
-
   return res.status(200).json(new CustomResponse(200, 'OTP sent successfully.'));
 });
 
-// Verify otp with redis otp and permit reset password
+// Verify OTP for password reset
 export const forgotPasswordVerifyOtp = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = validateRequest({ schema: emailAndOtpValidator, data: req.body });
 
-  const redisData: object | null = await getRedisValue(email as string);
-  if (redisData === null) {
+  const redisData = await getRedisValue(email as string);
+  if (!redisData) {
     throw new CustomError(404, 'OTP expired.');
   }
 
   const { otp: redisOtp } = redisData as { otp: string };
-
   if (otp !== redisOtp) {
     throw new CustomError(401, 'Invalid OTP.');
   }
@@ -137,7 +130,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
     data: req.body,
   });
 
-  const user: UserType | null = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw new CustomError(404, 'User not found.');
@@ -170,9 +163,7 @@ export const login = asyncHandler(async (req, res) => {
     throw new CustomError(404, 'User not found.');
   }
 
-  const isPasswordCorrect: boolean = await user.isPasswordCorrect(password);
-
-  if (!isPasswordCorrect) {
+  if (!(await user.isPasswordCorrect(password))) {
     throw new CustomError(401, 'Invalid Password.');
   }
 
@@ -181,7 +172,7 @@ export const login = asyncHandler(async (req, res) => {
     isGenerateRefreshToken: true,
   });
 
-  //  // Store refresh token in DB
+  // Store refresh token in DB
   user.refreshToken = refreshToken;
   await user.save;
 
@@ -199,7 +190,7 @@ export const login = asyncHandler(async (req, res) => {
     .json(new CustomResponse(200, userWithoutSensitiveInfo, 'User logged in successfully.'));
 });
 
-// Login with other social logins like google and github
+// Login with social providers (eg: github, google)
 export const loginWithAuthProviders = async ({
   provider,
   providerId,
@@ -207,9 +198,8 @@ export const loginWithAuthProviders = async ({
   email,
   avatar,
 }: LoginWithAuthProvidersProps) => {
-  // console.log('avatar', avatar);
   try {
-    let user = await User.findOne({ $or: [{ providerId: providerId }, { email: email }] });
+    let user = await User.findOne({ $or: [{ providerId }, { email }] });
     if (!user) {
       user = await User.create({
         provider: provider,
@@ -234,104 +224,40 @@ export const loginWithAuthProviders = async ({
   }
 };
 
+// Get user details
 export const getUser = asyncHandler(async (req: Request, res: Response) => {
-  const id = (req.user as any)._id;
-  const user = await User.findById(id).select('-password -refreshToken -provider -providerId');
+  const user = await User.findById((req.user as any)._id).select(
+    '-password -refreshToken -provider -providerId',
+  );
+
   if (!user) {
     throw new CustomError(404, 'User not found');
   }
-  // console.log(user);
 
-  res.status(200).json(new CustomResponse(200, user));
+  res.status(200).json(new CustomResponse(200, user, 'Fetched user details successfully'));
 });
 
+// Logout user
 export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
-  res.cookie('accessToken', '', options).cookie('refreshToken', '', options);
+  res.clearCookie('accessToken', options).clearCookie('refreshToken', options);
   res.status(200).json(new CustomResponse(200, 'User logout successfully'));
 });
-
-// @DESC get all users
-// @METHOD get
-// @PATH /user/users
-// @RETURN users
-export const getAvailableUsers = asyncHandler(async (req: Request, res: Response) => {
-  // console.log("hi here");
-
-  const id = (req.user as any)._id;
-
-  const users = await User.aggregate([
-    {
-      $match: {
-        _id: {
-          $ne: id, // avoid logged in user
-        },
-      },
-    },
-    {
-      $project: {
-        refreshToken: 0,
-        password: 0,
-        gender: 0,
-        isActive: 0,
-      },
-    },
-  ]);
-
-  // console.log("avoided logged in user", users);
-
-  res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
-});
-
-// Refresh Access Token
-// export const refreshAccessToken = asyncHandler(async (req, res) => {
-//   const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
-
-//   if (!incomingRefreshToken) {
-//     throw new CustomError(401, 'Refresh token required.');
-//   }
-
-//   const decodedToken = jwt.verify(
-//     incomingRefreshToken,
-//     process.env.REFRESH_TOKEN_SECRET_KEY as string,
-//   ) as JwtPayload;
-
-//   const user = await User.findById(decodedToken?._id);
-
-//   if (!user || user?.refreshToken !== incomingRefreshToken) {
-//     throw new CustomError(403, 'Invalid or expired refresh token.');
-//   }
-
-//   const { accessToken } = await generateTokens({
-//     userId: user?._id as string,
-//   });
-
-//   return res
-//     .status(200)
-//     .cookie('accessToken', accessToken, options)
-//     .json(new CustomResponse(200, 'Access token refreshed successfully'));
-// });
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {
-    console.log('here');
-
     throw new CustomError(403, 'Refresh token required.');
   }
-  console.log('step1');
+
   try {
     const decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET_KEY as string,
     ) as JwtPayload;
 
-    console.log('step2');
-    console.log(decodedToken);
-
     const user = await User.findById(decodedToken._id);
-    console.log('step3');
-    console.log(user);
+
     if (!user || user?.refreshToken !== incomingRefreshToken) {
       throw new CustomError(403, 'Invalid or expired refresh token.');
     }
@@ -347,4 +273,27 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   } catch (error) {
     throw new CustomError(403, 'Invalid or expired refresh token.');
   }
+});
+
+// Get all other users
+export const getAvailableUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await User.aggregate([
+    {
+      $match: {
+        _id: {
+          $ne: (req.user as any)._id, // avoid logged in user
+        },
+      },
+    },
+    {
+      $project: {
+        refreshToken: 0,
+        password: 0,
+        gender: 0,
+        isActive: 0,
+      },
+    },
+  ]);
+
+  res.status(200).json(new CustomResponse(200, users, 'Fetch other users successfully'));
 });

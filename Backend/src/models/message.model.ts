@@ -15,7 +15,7 @@ const messageSchema = new mongoose.Schema(
       content: { type: String, required: true },
       type: { type: String, required: true },
       format: { type: String, required: true },
-      caption: { type: String }, 
+      caption: { type: String },
     },
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,15 +27,13 @@ const messageSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      // enum: ['sent', 'delivered', 'seen'],
-      // default: 'sent',
     },
     notifications: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
       },
-    ], 
+    ],
     messageReplyDetails: {
       replyMessageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
       replyMessageUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -45,5 +43,4 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-export const Message = mongoose.model('Message', messageSchema);    
- 
+export const Message = mongoose.model('Message', messageSchema);

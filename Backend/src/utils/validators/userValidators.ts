@@ -13,12 +13,6 @@ const password = Joi.string()
     'any.required': 'Password is required',
   });
 
-  // const password = Yup.string()
-  //   .min(8, 'Password must be at least 8 characters')
-  //   .matches(/[0-9!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one number or symbol')
-  //   .matches(/[a-zA-Z]/, 'Password must contain at least one letter')
-  //   .required('Password is required');
-
 const signUpGenerateOtpValidator = Joi.object({
   username: Joi.string().min(4).required(),
   email,
@@ -40,7 +34,6 @@ const emailAndOtpValidator = Joi.object({
 const forgotPasswordGenerateOtpValidator = Joi.object({
   email,
 });
-
 
 export {
   emailAndPasswordValidator,

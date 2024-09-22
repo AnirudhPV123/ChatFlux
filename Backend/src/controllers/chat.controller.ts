@@ -1,9 +1,7 @@
-import { redisClient } from '@/config/redisConfig';
+import { redisClient } from '@/config';
 import { Conversation } from '@/models/conversation.model';
 import { io } from '@/socket/socket';
-import { asyncHandler } from '@/utils/asyncHandler';
-import { CustomError } from '@/utils/CustomError';
-import { CustomResponse } from '@/utils/CustomResponse';
+import { asyncHandler, CustomError, CustomResponse } from '@/utils';
 import mongoose from 'mongoose';
 
 const chatCommonAggregation = () => {
@@ -405,7 +403,7 @@ export const addUserToGroup = asyncHandler(async (req, res, next) => {
     }
 
     console.log('here');
- 
+
     const socketId = await redisClient.get(id.toString());
 
     console.log('id', id.toString());

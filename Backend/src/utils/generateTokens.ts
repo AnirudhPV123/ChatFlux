@@ -1,5 +1,5 @@
 import { User } from '@/models/user.model';
-import { CustomError } from './CustomError';
+import { CustomError } from './';
 
 type GenerateTokensProps = {
   userId: string;
@@ -34,4 +34,4 @@ const generateTokens = async ({ userId, isGenerateRefreshToken = false }: Genera
   }
 };
 
-export { generateTokens };
+export default generateTokens;

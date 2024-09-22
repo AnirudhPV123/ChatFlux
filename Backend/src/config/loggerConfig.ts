@@ -29,4 +29,4 @@ const loggerConfig = {
   },
 };
 
-export { loggerConfig };
+export default loggerConfig;

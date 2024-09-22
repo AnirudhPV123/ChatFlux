@@ -1,12 +1,9 @@
-import { asyncHandler } from '@/utils/asyncHandler';
-import { CustomError } from '@/utils/CustomError';
-import { CustomResponse } from '@/utils/CustomResponse';
+import { asyncHandler, CustomError, CustomResponse, uploadOnCloudinary } from '@/utils';
 import { Conversation } from '@/models/conversation.model';
 import { Message } from '@/models/message.model';
 import { io } from '@/socket/socket';
 import mongoose from 'mongoose';
-import { uploadOnCloudinary } from '@/utils/cloudinary';
-import { redisClient } from '@/config/redisConfig';
+import { redisClient } from '@/config';
 
 // @DESC Send a message between users and handle socket communication
 // @METHOD POST

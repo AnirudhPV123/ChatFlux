@@ -1,5 +1,5 @@
-import { ObjectSchema } from "joi";
-import { CustomError } from "./CustomError";
+import { ObjectSchema } from 'joi';
+import { CustomError } from './';
 
 const validateRequest = <T>({ schema, data }: { schema: ObjectSchema<T>; data: object }) => {
   const { error, value } = schema.validate(data);
@@ -9,4 +9,4 @@ const validateRequest = <T>({ schema, data }: { schema: ObjectSchema<T>; data: o
   return value;
 };
 
-export {validateRequest}
+export default validateRequest;

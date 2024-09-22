@@ -1,4 +1,4 @@
-import { generateOtp } from './generateOtp';
+import { generateOtp } from './';
 import { setRedisValue } from './redisOperations';
 import sendEmailVerification from './sendEmailVerification';
 
@@ -20,4 +20,4 @@ const handleOtpProcess = async ({
   });
 };
 
-export { handleOtpProcess };
+export default handleOtpProcess;

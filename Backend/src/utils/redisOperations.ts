@@ -1,4 +1,4 @@
-import { redisClient } from '@/config/redisConfig';
+import { redisClient } from '@/config';
 
 type SetRedisValueProps = {
   key: string;
@@ -11,7 +11,7 @@ const setRedisValue = async ({ key, data, expTime }: SetRedisValueProps): Promis
     const stringValue = JSON.stringify(data);
     await redisClient.setEx(key, expTime, stringValue);
   } catch (error) {
-  console.log(`Error setting value in Redis: ${error}`);
+    console.log(`Error setting value in Redis: ${error}`);
   }
 };
 
@@ -27,4 +27,4 @@ const getRedisValue = async (key: string): Promise<object | null> => {
   }
 };
 
-export {getRedisValue,setRedisValue}
+export { getRedisValue, setRedisValue };

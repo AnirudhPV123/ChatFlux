@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
 import connectDB from './db/index';
 import { server } from './socket/socket';
-
 dotenv.config({ path: './.env' });
 import './app';
+import { CustomError } from './utils';
 
 const PORT = process.env.PORT || 5000;
 
@@ -17,7 +17,8 @@ connectDB()
   })
   .catch((error) => {
     console.log('MONGODB connection FAILED: ', error);
-    process.exit(1);
+    throw new CustomError(500, 'MONGODB connection FAILED: ');
+    // process.exit(1);
   });
 
 // Optionally, handle uncaught exceptions and unhandled rejections globally

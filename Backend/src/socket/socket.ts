@@ -1,5 +1,5 @@
 import { Server } from 'socket.io';
-import { redisClient } from '@/config/redisConfig';
+import { redisClient } from '@/config';
 
 import express, { Application } from 'express';
 import http from 'http';

@@ -1,6 +1,5 @@
 import { User, UserType } from '../models/user.model';
-import { CustomError } from '../utils/CustomError';
-import { asyncHandler } from '../utils/asyncHandler';
+import { CustomError, asyncHandler } from '../utils';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
 export const verifyJWT = asyncHandler(async (req, _, next) => {
@@ -9,14 +8,9 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     const token: string =
       req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '');
 
-      console.log("check token")
     if (!token) {
       throw new CustomError(401, 'Unauthorized request.');
     }
-
-    console.log("no token")
-
-
 
     let decodedToken;
     try {

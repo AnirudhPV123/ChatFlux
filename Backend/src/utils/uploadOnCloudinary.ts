@@ -1,12 +1,9 @@
-import { v2 as cloudinary, UploadApiOptions } from 'cloudinary';
+import { cloudinaryConfig } from '@/config';
+import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
 // cloudinary configuration
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+cloudinary.config(cloudinaryConfig);
 
 const uploadOnCloudinary = async (localFilePath: string, format: string) => {
   console.log('file is uploading on cloudinary : ', localFilePath);
@@ -42,4 +39,4 @@ const uploadOnCloudinary = async (localFilePath: string, format: string) => {
   }
 };
 
-export { uploadOnCloudinary };
+export default uploadOnCloudinary;
