@@ -4,29 +4,15 @@ import { setOnlineUsers } from "@/redux/userSlice";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
 
 function useGetOnlineUsers() {
-  const { authUser, onlineUsers } = useTypedSelector((store) => store.user);
-  const { chats } = useTypedSelector((store) => store.chat);
+  const { authUser } = useTypedSelector((store) => store.user);
 
   const dispatch = useTypedDispatch();
   const socket = useSocket();
 
   useEffect(() => {
-    // socket?.on("getOnlineUsers", (onlineUsers) => {
-    //   console.log("oneli", onlineUsers);
-    //   // dispatch(setOnlineUsers(onlineUsers));
-    // });
-
     const handleOnlineUsers = (onlineUsers) => {
-      console.log("oneli", onlineUsers);
       dispatch(setOnlineUsers(onlineUsers));
     };
-
-    // const handleOnlineUsers = (userId: string) => {
-    //   console.log("oneli", userId);
-    //   dispatch(setOnlineUsers(userId));
-    //   // console.log([onlineUsers.push(userId)]);
-    //   // dispatch(setOnlineUsers([onlineUsers.push(userId)]));
-    // };
 
     if (socket) {
       socket?.on("getOnlineUsers", handleOnlineUsers);

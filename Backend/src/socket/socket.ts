@@ -3,8 +3,6 @@ import { redisClient } from '@/config';
 
 import express, { Application } from 'express';
 import http from 'http';
-import { Conversation } from '@/models/conversation.model';
-import mongoose from 'mongoose';
 import { Message } from '@/models/message.model';
 
 export const app: Application = express();
@@ -17,29 +15,11 @@ const io = new Server(server, {
   },
 });
 
-const userSocketMap = new Map();
-
-const addSocketForUser = (userId: string, socketId: string) => {
-  userSocketMap.set(userId, socketId);
-};
-
-const removeSocketForUser = (userId: string) => {
-  userSocketMap.delete(userId);
-};
-
-const getSocketForUser = (userId: string) => {
-  return userSocketMap.get(userId);
-};
-
-// Function to get all online users
-const getOnlineUsers = () => {
-  return Array.from(userSocketMap.keys());
-};
-
 const storeUserSocketId = async (userId: string, socketId: string) => {
   await redisClient.hSet('userSockets', userId, socketId);
 };
 
+// Helper function for getting user socket id | used in emitSocketEvent - controllers
 export const getUserSocketId = async (userId: string) => {
   return await redisClient.hGet('userSockets', userId);
 };
@@ -56,87 +36,12 @@ io.on('connection', async (socket) => {
   console.log('A user connected:', socket.id);
   const userId = socket.handshake.query.userId as string;
 
-  // just tesing
-  removeSocketForUser(userId);
-  addSocketForUser(userId, socket.id);
-
   await removeUserSocketId(userId);
   await storeUserSocketId(userId, socket.id);
 
-  if (userId) {
-    try {
-      await redisClient.del(userId as string);
-      await redisClient.setEx(userId as string, 60 * 60, socket.id as string);
-      socket.emit('welcome', { message: 'Welcome to the server socket io!' });
-    } catch (error) {
-      console.error('Error setting Redis value:', error);
-    }
-  }
-
-  // console.log('fuck;', getOnlineUsers());
-  // const socketIDS = getOnlineUsers();
-  // io.emit('getOnlineUsers', socketIDS);
-  // io.emit('getOnlineUsers', {message:"done"});
-
-  // extra codes
-
-  // send online status to the users who the user connected
-  // if (userId) {
-  //   const sendOnlineUsers = await Conversation.aggregate([
-  //     {
-  //       $match: {
-  //         isGroupChat: false,
-  //         participants: new mongoose.Types.ObjectId(userId as string),
-  //       },
-  //     },
-  //     {
-  //       $project: {
-  //         _id: 1, // Include only the _id
-  //         participantId: {
-  //           $arrayElemAt: [
-  //             {
-  //               $filter: {
-  //                 input: '$participants',
-  //                 as: 'participant',
-  //                 cond: { $ne: ['$$participant', userId] }, // Filter out the userId
-  //               },
-  //             },
-  //             0, // Get the first element of the filtered array
-  //           ],
-  //         },
-  //       },
-  //     },
-  //   ]);
-
-  //   // console.log('userid', userId);
-  //   if (sendOnlineUsers) {
-  //     console.log('cahts:', sendOnlineUsers);
-  //     sendOnlineUsers.forEach(async ({ participantId }) => {
-  //       const userSocketId = await redisClient.get(participantId.toString());
-  //       console.log('userSocketIdlk,', userSocketId);
-  //       if (userSocketId) {
-  //         io.to(userSocketId).emit('getOnlineUsers', userId);
-  //       }
-  //     });
-  //   }
-  // }
-  // sendOnlineUsers.forEach(async ({ participantId }) => {
-  //   const userSocketId = await redisClient.get(participantId.toString());
-  //   console.log('userSocketIdlk,', userSocketId);
-  //   if (userSocketId) {
-  //     io.to(userSocketId).emit('getOnlineUsers', userId);
-  //   }
-  // });
-
-  // end
-
   io.emit('getOnlineUsers', await getAllSocketIds());
-  console.log('chec onli:', await getAllSocketIds());
-  // io.emit('getOnlineUsers', getOnlineUsers());
 
-  // new message status update send from receiver to backend
-  // update Message status in DB
-  // send update status to message sender
+  // message status update from receiver and update DB and send status to sender
   socket.on(
     'new_message_status_update_from_receiver_to_backend',
     (messageId, conversationId, status) => {
@@ -167,7 +72,7 @@ io.on('connection', async (socket) => {
   // when a participant seen the message , remove participant id from notification array
   socket.on('new_message_status_update_from_group_participant_to_backend', (newMessageId) => {
     (async function () {
-      const updatedMessage = await Message.findByIdAndUpdate(
+      await Message.findByIdAndUpdate(
         newMessageId,
         {
           $pull: { notifications: userId }, // Remove userId from notifications array
@@ -180,9 +85,6 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', async () => {
     console.log('user disconnected');
     removeUserSocketId(userId);
-    // removeSocketForUser(userId);
-    // io.emit('getOnlineUsers', getAllSocketIds());
-    // io.emit('getOnlineUsers', getOnlineUsers());
     io.emit('getOnlineUsers', await getAllSocketIds());
   });
 });
