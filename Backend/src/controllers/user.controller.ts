@@ -150,7 +150,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
     .json(new CustomResponse(200, userWithoutSensitiveInfo, 'Password reset successfully.'));
 });
 
-export const login = asyncHandler(async (req, res) => {
+export const login = asyncHandler(async (req:Request, res:Response) => {
   const { email, password } = validateRequest({
     schema: emailAndPasswordValidator,
     data: req.body,
@@ -243,7 +243,7 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(new CustomResponse(200, 'User logout successfully'));
 });
 
-export const refreshAccessToken = asyncHandler(async (req, res) => {
+export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
   const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
   if (!incomingRefreshToken) {

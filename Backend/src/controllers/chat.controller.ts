@@ -1,13 +1,21 @@
-import { redisClient } from '@/config';
 import { Conversation } from '@/models/conversation.model';
-import { io } from '@/socket/socket';
+import { Message } from '@/models/message.model';
+import { getUserSocketId, io } from '@/socket/socket';
 import { asyncHandler, CustomError, CustomResponse } from '@/utils';
 import mongoose from 'mongoose';
 
+// Helper function for emitting socket events
+const emitSocketEvent = async (userId: string, event: string, data: any, data2?: any) => {
+  const socketId = await getUserSocketId(userId);
+  if (socketId) {
+    io.to(socketId).emit(event, data, data2);
+  }
+};
+
+// Common aggregation for chat participants
 const chatCommonAggregation = () => {
   return [
     {
-      // lookup for the participants present
       $lookup: {
         from: 'users',
         foreignField: '_id',
@@ -29,10 +37,7 @@ const chatCommonAggregation = () => {
   ];
 };
 
-// @DESC Create new chat
-// @METHOD POST
-// @PATH /chat/one-on-one/:id (id - receiverId)
-// @RETURN chat details
+// Create one-on-one chat
 export const createAOneOnOneChat = asyncHandler(async (req, res, next) => {
   const senderId = (req.user as any)._id;
   const receiverId = req.params.id;
@@ -62,19 +67,11 @@ export const createAOneOnOneChat = asyncHandler(async (req, res, next) => {
     ...chatCommonAggregation(),
   ]);
 
-  //   SOCKET.IO
-  const receiverSocketId = await redisClient.get(receiverId);
-  if (receiverSocketId) {
-    io.to(receiverSocketId).emit('new-chat', chat[0]);
-  }
-
+  await emitSocketEvent(receiverId, 'new-chat', chat[0]);
   return res.status(200).json(new CustomResponse(200, chat, 'Chat created Successfully'));
 });
 
-// @DESC Create group chat
-// @METHOD POST
-// @PATH /chat/group/
-// @RETURN return group chat details
+// Create group chat
 export const createAGroupChat = asyncHandler(async (req, res, next) => {
   const { participants, groupName } = req.body;
   const groupAdmin = (req.user as any)._id;
@@ -95,105 +92,69 @@ export const createAGroupChat = asyncHandler(async (req, res, next) => {
     {
       $project: { messages: 0 },
     },
-    // ...chatCommonAggregation(),
   ]);
 
-  conversation.participants.forEach(async (userId) => {
-    const socketId = await redisClient.get(userId.toString()); // Assuming userId directly corresponds to index in socketIds array
-    if (socketId) {
-      io.to(socketId).emit('new-chat', chat[0]);
-    }
-  });
+  await Promise.all(
+    conversation.participants.map((userId) => {
+      // to prevent emit message to the senderItself
+      if (groupAdmin.equals(userId)) {
+        return;
+      }
+      emitSocketEvent(userId.toString(), 'new-chat', chat[0]);
+    }),
+  );
 
   return res.status(200).json(new CustomResponse(200, chat, 'Group chat created Successfully'));
 });
 
-// @DESC Get all chats
-// @METHOD GET
-// @PATH /chat/
-// @RETURN Array of chats
+// Get all chats
 export const getAllChats = asyncHandler(async (req, res, next) => {
-  // TODO: This part is used to update status to delivered if status is !seen or when the user open the application | this getAllChats always calls when user open the application
-
   const userId = (req.user as any)._id;
 
-  //   const messagesToStatusUpdate = await Message.find({
-  //     receiverId: req.user._id,
-  //     status: { $ne: 'seen' },
-  //   });
+  // update message status to delivered when receiver is online
+  await Message.updateMany(
+    { receiverId: userId, status: { $ne: 'seen' } },
+    { $set: { status: 'delivered' } },
+  );
 
-  //   if (messagesToStatusUpdate.length > 0) {
-  //     // update status to delivered if status is !seen
-  //     await Message.updateMany(
-  //       {
-  //         receiverId: req.user._id,
-  //         status: { $ne: 'seen' },
-  //       },
-  //       {
-  //         $set: { status: 'delivered' },
-  //       },
-  //     );
-
-  //     const conversationIds = await Conversation.aggregate([
-  //       {
-  //         $match: {
-  //           participants: { $elemMatch: { $eq: req.user._id } }, // get all chats that have logged in user as a participant
-  //           isGroupChat: false,
-  //         },
-  //       },
-  //       {
-  //         $project: {
-  //           participants: 1,
-  //         },
-  //       },
-  //       {
-  //         $unwind: {
-  //           path: '$participants',
-  //         },
-  //       },
-  //       {
-  //         $match: {
-  //           participants: { $ne: userId },
-  //         },
-  //       },
-  //       {
-  //         $project: {
-  //           participants: 1,
-  //         },
-  //       },
-  //     ]);
-
-  //     //   SOCKET.IO
-  //     //   let socketIds = getSocketIds();
-
-  //     //   // send status update to sender
-  //     //   conversationIds.forEach((conversation) => {
-  //     //     const socketId = socketIds[conversation.participants];
-  //     //     if (socketId) {
-  //     //       io.to(socketId).emit(
-  //     //         'message_status_update_from_backend_to_sender',
-  //     //         conversation._id,
-  //     //         'delivered',
-  //     //       );
-  //     //     }
-  //     //   });
-  //   }
-
-  // get all chats with participants details and calculate notification based on status !seen
-  // by getting chats like this one to one and group chat both notification created but from frontend for group notification not use
-
-  const chats = await Conversation.aggregate([
+  const participantsIds = await Conversation.aggregate([
     {
       $match: {
-        participants: { $elemMatch: { $eq: userId } }, // get all chats that have logged in user as a participant
+        participants: { $elemMatch: { $eq: userId } },
         isGroupChat: false,
       },
     },
+    { $project: { participants: 1 } },
+    { $unwind: { path: '$participants' } },
+    { $match: { participants: { $ne: userId } } },
+    { $project: { participants: 1 } },
+    { $project: { id: `$participants` } },
+  ]);
+
+  // update message status to delivered when receiver is online
+  await Promise.all(
+    participantsIds.map(async ({ id, _id: conversationId }) => {
+      if (userId === id) {
+        return;
+      }
+      emitSocketEvent(
+        id.toString(),
+        'message_status_update_from_backend_to_sender',
+        conversationId?.toString(),
+        'delivered',
+      );
+    }),
+  );
+
+  // get all chats with participants details and calculate notification based on status !seen
+  const chats = await Conversation.aggregate([
     {
-      $sort: {
-        updatedAt: -1,
+      $match: {
+        participants: { $elemMatch: { $eq: userId } }, // get all chats that have logged in user as a participant and isGroupChat false
+        isGroupChat: false,
       },
     },
+    { $sort: { updatedAt: -1 } },
     {
       $lookup: {
         from: 'users',
@@ -252,20 +213,11 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
   const groupChats = await Conversation.aggregate([
     {
       $match: {
-        participants: { $elemMatch: { $eq: userId } }, // get all chats that have logged in user as a participant
+        participants: { $elemMatch: { $eq: userId } }, // get all chats that have logged in user as a participant and isGroupChat
         isGroupChat: true,
       },
     },
-    {
-      $sort: {
-        updatedAt: -1,
-      },
-    },
-    // {
-    //   $project: {
-    //     participants: 0,
-    //   },
-    // },
+    { $sort: { updatedAt: -1 } },
     {
       $lookup: {
         from: 'messages',
@@ -298,18 +250,13 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
     },
   ]);
 
-  // pushing group chats to one on one chat and combine then and return to frontend
-  if (groupChats.length > 0) {
-    groupChats.forEach((chat) => chats.push(chat));
-  }
+  // combine both one-on-one and group chats
+  const allChats = [...chats, ...groupChats];
 
-  // console.log('final chats', chats);
-
-  return res.status(200).json(new CustomResponse(200, chats, 'Chats fetched successfully'));
+  return res.status(200).json(new CustomResponse(200, allChats, 'Chats fetched successfully'));
 });
 
-// TODO: later optimization
-// get group member details for profile click
+// get group members details for profile click
 export const groupMembersDetails = asyncHandler(async (req, res, next) => {
   const chatId = req.params.id;
 
@@ -347,39 +294,30 @@ export const groupMembersDetails = asyncHandler(async (req, res, next) => {
     .json(new CustomResponse(200, result, 'Group members details fetched Successfully'));
 });
 
+// Delete chat
 export const deleteChat = asyncHandler(async (req, res, next) => {
-  const id = req.params.id;
-  const userId = req.params.userId;
+  const chatId = req.params.id;
+  const userId = req.params.userId; // opposite userId
 
-  console.log('here:', id, userId);
-
-  const result = await Conversation.findByIdAndDelete(id);
-  console.log('deleted', result);
+  const result = await Conversation.findByIdAndDelete(chatId);
 
   if (!result) {
     return res.status(500).json(new CustomError(500, 'Server error.'));
   }
 
-  //   SOCKET.IO
-  const receiverSocketId = await redisClient.get(userId.toString());
-
-  console.log('receiver:', receiverSocketId);
-  // send new message to receiver
-  if (receiverSocketId) {
-    io.to(receiverSocketId).emit('chat_deleted', result._id);
-  }
+  await emitSocketEvent(userId, 'chat_deleted', result._id);
 
   return res.status(200).json(new CustomResponse(200, result, 'Chat deleted Successfully'));
 });
 
+// Add user to a group
 export const addUserToGroup = asyncHandler(async (req, res, next) => {
-  const { groupId, userId } = req.params;
-  console.log('groupId add', groupId);
-  console.log('usrId add', groupId);
+  const { groupId, userId: newUserId } = req.params;
+  const adminId = (req.user as any)._id;
 
   const result = await Conversation.findOneAndUpdate(
     { _id: new mongoose.Types.ObjectId(groupId) },
-    { $push: { participants: userId } },
+    { $push: { participants: newUserId } },
     { new: true },
   );
 
@@ -387,67 +325,46 @@ export const addUserToGroup = asyncHandler(async (req, res, next) => {
     throw new CustomError(500, 'Server error.');
   }
 
-  let conversation = await Conversation.findById(groupId);
-
-  console.log('rewsul result', result);
   // SOCKET.IO
-
-  conversation?.participants.forEach(async (id) => {
-    // to prevent emit message to the senderItself
-
-    console.log('req.user._id:', (req.user as any)._id);
-    console.log('id:', id);
-
-    if ((req.user as any)._id.equals(id)) {
-      return;
-    }
-
-    console.log('here');
-
-    const socketId = await redisClient.get(id.toString());
-
-    console.log('id', id.toString());
-    console.log('socketId:', socketId);
-    if (socketId) {
-      // userid and groupid
-      if (id.toString() === userId) {
-        io.to(socketId).emit('add-user-to-group', userId, result);
-      } else {
-        console.log('result to others', result._id);
-        io.to(socketId).emit('add-user-to-group', userId, result._id);
+  await Promise.all(
+    result.participants.map((id) => {
+      // to prevent emit message to the senderItself
+      if (adminId.equals(id)) {
+        return;
       }
-    }
-  });
+      if (id.toString() === newUserId) {
+        emitSocketEvent(id.toString(), 'add-user-to-group', newUserId, result);
+      } else {
+        emitSocketEvent(id.toString(), 'add-user-to-group', newUserId, result._id);
+      }
+    }),
+  );
 
   return res
     .status(200)
-    .json(new CustomResponse(200, { groupId, userId }, 'User added to group Successfully'));
+    .json(new CustomResponse(200, { groupId, newUserId }, 'User added to group Successfully'));
 });
 
-// do further optimzation
+// Delete group
 export const deleteGroup = asyncHandler(async (req, res, next) => {
   const chatId = req.params.id;
-  const userId = (req.user as any)._id;
+  const adminId = (req.user as any)._id;
 
   let conversation = await Conversation.findById(chatId);
 
   const result = await Conversation.findByIdAndDelete(chatId);
 
-  if (result) {
-    // SOCKET.IO
-
-    conversation?.participants.forEach(async (id) => {
-      // to prevent emit message to the senderItself
-      if ((req.user as any)._id.equals(id)) {
-        return;
-      }
-
-      const socketId = await redisClient.get(id.toString());
-      if (socketId) {
-        io.to(socketId).emit('delete-group', result._id);
-      }
-    });
+  if (!result) {
+    throw new CustomError(500, 'Server error.');
   }
+  // SOCKET.IO
+  conversation?.participants.forEach(async (id) => {
+    if (adminId.equals(id)) {
+      return;
+    }
+
+    await emitSocketEvent(id.toString(), 'delete-group', result._id);
+  });
 
   return res
     .status(200)
@@ -469,18 +386,12 @@ export const leaveGroup = asyncHandler(async (req, res, next) => {
   }
 
   // SOCKET.IO
-  let conversation = await Conversation.findById(chatId);
-
-  conversation?.participants.forEach(async (userId) => {
-    // to prevent emit message to the senderItself
-    if ((req.user as any)._id.equals(userId)) {
+  result?.participants.forEach(async (id) => {
+    if (userId === id) {
       return;
     }
 
-    const socketId = await redisClient.get(userId.toString());
-    if (socketId) {
-      io.to(socketId).emit('leave-group', userId, result._id);
-    }
+    await emitSocketEvent(id.toString(), 'leave-group', userId, result._id.toString());
   });
 
   return res
@@ -491,43 +402,27 @@ export const leaveGroup = asyncHandler(async (req, res, next) => {
 // almost same has leaveGroup
 export const removeUserFromGroup = asyncHandler(async (req, res, next) => {
   const chatId = req.params.groupId;
-  const userId = req.params.userId;
-
-  console.log('remove userId', userId);
-  // do like this or if we get converstion after result we get only the updated conversation
+  const removeUserId = req.params.userId;
+  const adminId = (req.user as any)._id;
 
   const result = await Conversation.findByIdAndUpdate(
     { _id: new mongoose.Types.ObjectId(chatId) },
-    { $pull: { participants: userId } },
-    { new: true },
+    { $pull: { participants: removeUserId } },
   );
 
   if (!result) {
     throw new CustomError(500, 'Server error.');
   }
 
-  let conversation = await Conversation.findById(chatId);
-
-  // this is done because the user is already deleted so need to do it seperately
-  const socketId = await redisClient.get(userId.toString());
-  if (socketId) io.to(socketId).emit('remove-user-from-group', userId, result._id);
-
   // SOCKET.IO
-  conversation?.participants.forEach(async (id) => {
-    // to prevent emit message to the senderItself
-    if ((req.user as any)._id.equals(id)) {
-      return;
-    }
-
-    console.log('id', id.toString());
-
-    const socketId = await redisClient.get(id.toString());
-    if (socketId) {
-      // userid and groupid
-      // here the user is already deleted so the message will not be sent to the user so do it seperately
-      io.to(socketId).emit('remove-user-from-group', userId, result._id);
-    }
-  });
+  await Promise.all(
+    result.participants.map((id) => {
+      if (adminId === id.toString()) {
+        return;
+      }
+      emitSocketEvent(id.toString(), 'remove-user-from-group', removeUserId, result._id);
+    }),
+  );
 
   return res
     .status(200)
