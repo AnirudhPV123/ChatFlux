@@ -9,7 +9,7 @@ export type Message = {
     type: string;
     format: string;
     caption: string;
-  };
+  } | null;
   conversationId: string;
   groupId: string;
   status: string;
@@ -18,7 +18,7 @@ export type Message = {
     replyMessageId: string;
     replyMessageUserId: string;
     status: boolean;
-  };
+  } | null;
   senderDetails: {
     _id: string;
     avatar: string;
@@ -46,13 +46,13 @@ const messageSlice = createSlice({
     // when sending message temporary message is created so when response , update temporary message except senderId(already present) and message object(if we update message object the frontend message file message load by cloudinary url and blank space show for some time)
     setUpdateMessage(state, action) {
       const { tempMessageId, newMessage, status } = action.payload;
-      const index = state.messages.findIndex(
+      const index = state.messages?.findIndex(
         (message) => message._id === tempMessageId,
       ) as number;
       if (index !== -1) {
         if (status !== "failed") {
-          state.messages[index] = {
-            ...state.messages[index],
+          state.messages![index] = {
+            ...state.messages![index],
             _id: newMessage._id,
             receiverId: newMessage.receiverId,
             ...(newMessage?.conversationId && {
@@ -67,8 +67,8 @@ const messageSlice = createSlice({
             messageReplyDetails: newMessage?.messageReplyDetails,
           };
         } else {
-          state.messages[index] = {
-            ...state.messages[index],
+          state.messages![index] = {
+            ...state.messages![index],
             status: "failed",
           };
         }
@@ -76,12 +76,12 @@ const messageSlice = createSlice({
     },
     setDeleteMessage(state, action) {
       const { messageId } = action.payload;
-      const index = state.messages.findIndex(
+      const index = state.messages?.findIndex(
         (message) => message._id === messageId,
       );
       if (index !== -1) {
-        state.messages[index] = {
-          ...state.messages[index],
+        state.messages![index as number] = {
+          ...state.messages![index as number],
           messageReplyDetails: null,
           message: null,
         };

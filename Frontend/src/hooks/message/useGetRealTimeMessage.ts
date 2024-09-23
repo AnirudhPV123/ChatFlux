@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-import { setMessages } from "@/redux/messageSlice";
+import { Message, setMessages } from "@/redux/messageSlice";
 import { useSocket } from "@/context/SocketContext";
 
-import { setChats } from "@/redux/chatSlice";
+import { ChatType, setChats } from "@/redux/chatSlice";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
 
 const useGetRealTimeMessage = () => {
@@ -21,7 +21,7 @@ const useGetRealTimeMessage = () => {
   useEffect(() => {
     if (!chats || (!selectedUser && !selectedGroup)) return;
 
-    const updatedChats = chats?.map((chat) => {
+    const updatedChats = chats?.map((chat: ChatType) => {
       // check chat id === selectedGroup._id
       if (chat.isGroupChat && chat?._id === selectedGroup?._id) {
         console.log("group");
@@ -50,7 +50,7 @@ const useGetRealTimeMessage = () => {
   // send by backend or receiver (depends)
   // emit status
   useEffect(() => {
-    const handleNewMessage = (newMessage) => {
+    const handleNewMessage = (newMessage: Message) => {
       // check whether the senderId and selectedUser._id is equal
       // if set message status to seen and send status update to backend
       // else set message status to delivered and send status update to backend
@@ -61,7 +61,10 @@ const useGetRealTimeMessage = () => {
       ) {
         newMessage.status = "seen";
         // check message exist
-        if (messages[0]?.conversationId === newMessage.conversationId) {
+        if (
+          messages![0]?.conversationId === newMessage.conversationId &&
+          messages
+        ) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -74,7 +77,7 @@ const useGetRealTimeMessage = () => {
           "seen",
         );
       } else if (selectedGroup && selectedGroup?._id === newMessage?.groupId) {
-        if (messages[0]?.groupId === newMessage?.groupId) {
+        if (messages![0]?.groupId === newMessage?.groupId && messages) {
           dispatch(setMessages([...messages, newMessage]));
         } else {
           dispatch(setMessages([newMessage]));
@@ -89,7 +92,7 @@ const useGetRealTimeMessage = () => {
       } else if (newMessage?.conversationId) {
         // message senderId !== selectedUser._id
         // so set status delivered
-        const updatedChats = chats.map((chat) => {
+        const updatedChats = chats.map((chat: ChatType) => {
           if (chat._id === newMessage.conversationId) {
             return {
               ...chat,
@@ -113,7 +116,7 @@ const useGetRealTimeMessage = () => {
       } else if (newMessage?.groupId) {
         // message senderId !== selectedUser._id
         // so set status delivered
-        const updatedChats = chats.map((chat) => {
+        const updatedChats = chats.map((chat: ChatType) => {
           if (chat._id === newMessage.groupId) {
             return {
               ...chat,
@@ -149,7 +152,10 @@ const useGetRealTimeMessage = () => {
   // send ny receiver
   // this code is used to update new message status or update all message status when receiver call getAllChats
   useEffect(() => {
-    const handleMessageStatusUpdate = (conversationId, status) => {
+    const handleMessageStatusUpdate = (
+      conversationId: string,
+      status: string,
+    ) => {
       const updatedMessage = messages?.map((message) =>
         message?.conversationId === conversationId && message.status !== "seen"
           ? { ...message, status: status }
@@ -171,7 +177,7 @@ const useGetRealTimeMessage = () => {
   }, [socket, messages, dispatch, chats]);
 
   useEffect(() => {
-    const handleMessageDeleted = (deletedMessageId) => {
+    const handleMessageDeleted = (deletedMessageId: string) => {
       const updatedMessage = messages?.map((message) =>
         message?._id === deletedMessageId
           ? { ...message, messageReplyDetails: null, message: null }
