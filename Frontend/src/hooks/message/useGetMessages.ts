@@ -3,6 +3,7 @@ import { getGroupMessages, getMessages } from "@/services/api/message";
 import { setMessages } from "@/redux/messageSlice";
 import toast from "react-hot-toast";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
+import CustomError from "@/types/CustomErrorType";
 
 function useGetMessages() {
   const { selectedUser, selectedGroup } = useTypedSelector(
@@ -21,9 +22,10 @@ function useGetMessages() {
         console.log("group chat get:", res);
         dispatch(setMessages(res?.data?.data));
       }
-    } catch (error: any) {
+    } catch (error) {
+      const customError = error as CustomError;
       toast.error(
-        error.response?.data?.message ||
+        customError.response?.data?.message ||
           "An error occurred while fetching messages.",
       );
     }

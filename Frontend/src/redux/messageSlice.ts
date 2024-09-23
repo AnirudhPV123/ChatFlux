@@ -1,10 +1,40 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+export type Message = {
+  _id: string;
+  senderId: string;
+  receiverId: string;
+  message: {
+    content: string;
+    type: string;
+    format: string;
+    caption: string;
+  };
+  conversationId: string;
+  groupId: string;
+  status: string;
+  notification: [string];
+  messageReplyDetails: {
+    replyMessageId: string;
+    replyMessageUserId: string;
+    status: boolean;
+  };
+  senderDetails: {
+    _id: string;
+    avatar: string;
+    username: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+const initialState: { messages: Message[] | null } = {
+  messages: null,
+};
+
 const messageSlice = createSlice({
   name: "message",
-  initialState: {
-    messages: null,
-  },
+  initialState,
   reducers: {
     setMessages: (state, action) => {
       state.messages = action.payload;

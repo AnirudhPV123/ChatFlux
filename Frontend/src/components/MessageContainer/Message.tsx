@@ -1,34 +1,38 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  LegacyRef,
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import moment from "moment";
-import {
-  ChevronDown,
-  EllipsisVertical,
-  MessageCircleOff,
-  MessageCircleReply,
-  Trash2,
-} from "lucide-react";
+import { MessageCircleOff, MessageCircleReply, Trash2 } from "lucide-react";
 import { setMessageReplyDetails } from "@/redux/temporarySlice";
 import { deleteMessage } from "@/services/api/message";
 import { setDeleteMessage } from "@/redux/messageSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import type { Message } from "@/redux/messageSlice";
 
-function Message({ message }) {
-  const [messageType, setMessageType] = useState("");
-  const [messageFormat, setMessageFormat] = useState("");
+function Message({ message }: { message: Message }) {
   const [messageContent, setMessageContent] = useState("");
   const [isSender, setIsSender] = useState(false);
 
-  const [replyMessageDetails, setReplyMessageDetails] = useState(null);
-  const [isReplyMessage, setIsReplyMessage] = useState(false);
-  const [replyGroupMessageSender, setReplyGroupMessageSender] = useState(null);
+  const [replyMessageDetails, setReplyMessageDetails] =
+    useState<Message | null>(null);
+  const [replyGroupMessageSender, setReplyGroupMessageSender] = useState<{
+    _id: string;
+    avatar: string;
+    username: string;
+  } | null>(null);
 
   const { authUser, selectedUser, selectedGroup } = useTypedSelector(
     (store) => store.user,
   );
   const { messages } = useTypedSelector((store) => store.message);
 
-  const scroll = useRef();
+  const scroll = useRef<HTMLElement>(null);
   const dispatch = useTypedDispatch();
 
   useLayoutEffect(() => {
@@ -36,15 +40,12 @@ function Message({ message }) {
     if (authUser?._id === message?.senderId) setIsSender(true);
     else setIsSender(false);
 
-    // set message details
-    setMessageType(message?.message?.type);
-    setMessageFormat(message?.message?.format);
     setMessageContent(message?.message?.content);
 
     // if this is a reply message than set reply message details
     // find message from messages array by using replyMessageId
     if (message?.messageReplyDetails) {
-      const originalMessage = messages.find(
+      const originalMessage = messages?.find(
         (msg) => msg._id === message?.messageReplyDetails?.replyMessageId,
       );
 
@@ -55,8 +56,6 @@ function Message({ message }) {
       }
 
       setReplyMessageDetails(originalMessage);
-      setIsReplyMessage(true);
-      console.log("original message", originalMessage);
     }
   }, [message, messages, isSender, authUser, selectedGroup]);
 
@@ -66,20 +65,59 @@ function Message({ message }) {
 
   const normalTime = moment(message?.updatedAt).format("H:mm a") || "";
 
+  const renderMediaContent = (messageType: string) => {
+    const dynamicMessage =
+      messageType === "replyMessageDetails" ? replyMessageDetails : message;
+    switch (dynamicMessage?.message?.type) {
+      case "text":
+        return <p>{dynamicMessage?.message?.content}</p>;
+      case "image":
+        return (
+          <img
+            src={dynamicMessage?.message?.content}
+            alt=""
+            className="w-1/2"
+          />
+        );
+      case "video":
+        return (
+          <video controls>
+            <source
+              src={dynamicMessage.message.content}
+              type={`video/${dynamicMessage.message.format}`}
+            />
+            Your browser does not support the video tag.
+          </video>
+        );
+      case "audio":
+        return (
+          <audio controls>
+            <source
+              src={dynamicMessage.message.content}
+              type={`audio/${dynamicMessage.message.format}`}
+            />
+          </audio>
+        );
+    }
+
+    return (
+      <div className="flex gap-2 opacity-60">
+        <MessageCircleOff />
+        <p> This message was deleted</p>
+      </div>
+    );
+  };
+
   return (
     <div
-      ref={scroll}
-      className={`chat ${
-        authUser?._id === message?.senderId
-          ? "chat-start"
-          : authUser?._id !== message?.senderId && "chat-end"
-      } mb-2`}
+      ref={scroll as LegacyRef<HTMLDivElement>}
+      className={`chat ${isSender ? "chat-start" : "chat-end"} mb-2`}
     >
       <div className="avatar chat-image w-8">
         <div className="w-10 rounded-full">
           {/* dynamic avatar setup */}
           <img
-            alt="Tailwind CSS chat bubble component"
+            alt="Avatar"
             src={
               isSender
                 ? authUser?.avatar
@@ -107,7 +145,7 @@ function Message({ message }) {
             <time className="text-xs opacity-50">{normalTime}</time>
 
             <div className="flex gap-2">
-              {messageContent && message?.senderId === authUser?._id && (
+              {messageContent && isSender && (
                 <Trash2
                   strokeWidth={3}
                   size={20}
@@ -125,7 +163,7 @@ function Message({ message }) {
                 strokeWidth={3}
                 size={20}
                 onClick={() => {
-                  message?.status !== "sending" &&
+                  if (message?.status !== "sending") {
                     dispatch(
                       setMessageReplyDetails({
                         replyMessageId: message?._id,
@@ -139,14 +177,15 @@ function Message({ message }) {
                             : selectedGroup && message?.senderDetails?.username,
                       }),
                     );
+                  }
                 }}
                 className="cursor-pointer"
               />
             </div>
           </div>
         </div>
+
         {replyMessageDetails && (
-          // {replyMessageDetails?.message?.content && (
           <div
             className={`rounded-lg p-2 ${
               !isSender ? "bg-gray-800" : "bg-[#5f69da]"
@@ -164,85 +203,17 @@ function Message({ message }) {
                   ? replyGroupMessageSender?.username
                   : "You"}
             </p>
-            {replyMessageDetails?.message?.content && (
-              <div>
-                {isReplyMessage &&
-                  replyMessageDetails?.message.type === "text" && (
-                    <p>{replyMessageDetails?.message?.content}</p>
-                  )}
-                {isReplyMessage &&
-                  replyMessageDetails?.message.type === "image" && (
-                    <img
-                      src={replyMessageDetails?.message?.content}
-                      alt=""
-                      className="w-1/2"
-                    />
-                  )}{" "}
-                {isReplyMessage &&
-                  replyMessageDetails?.message.type === "video" && (
-                    <video className="w-1/2">
-                      <source
-                        src={replyMessageDetails?.message?.content}
-                        type={`video/${replyMessageDetails?.message?.format}`}
-                      />
-                      Your browser does not support the video tag.
-                    </video>
-                  )}
-                {isReplyMessage &&
-                  replyMessageDetails?.message.type === "audio" && (
-                    <audio>
-                      <source
-                        src={replyMessageDetails?.message?.content}
-                        type={`audio/${replyMessageDetails?.message?.format}`}
-                      />
-                    </audio>
-                  )}
-              </div>
-            )}
-            {isReplyMessage && !replyMessageDetails?.message && (
-              <div className="flex gap-2 opacity-60">
-                <MessageCircleOff />
-                <p> This message was deleted</p>
-              </div>
-            )}
+            {replyMessageDetails?.message?.content &&
+              renderMediaContent("replyMessageDetails")}
           </div>
         )}
-        <div
-          className={`${
-            isSender && message?.message?.caption
-              ? "bg-[#5e69e6]"
-              : !isSender && message?.message?.caption
-                ? "bg-gray-800"
-                : "py-0"
-          } overflow-hidden rounded-lg p-2`}
-        >
-          {messageType === "text" ? (
-            <h2>{messageContent}</h2>
-          ) : messageType === "image" ? (
-            <img src={messageContent}></img>
-          ) : messageType === "video" ? (
-            <video controls>
-              <source src={messageContent} type={`video/${messageFormat}`} />
-              Your browser does not support the video tag.
-            </video>
-          ) : messageType === "audio" ? (
-            <audio controls className={`${replyMessageDetails && "mt-2"}`}>
-              <source src={messageContent} type={`audio/${messageFormat}`} />
-              Your browser does not support the video tag.
-            </audio>
-          ) : (
-            <div className="flex gap-2 opacity-60">
-              <MessageCircleOff />
-              <p> This message was deleted</p>
-            </div>
-          )}
-          {message?.message?.caption && (
-            <div className="px-1 pb-2">
-              {" "}
-              <p>{message?.message?.caption}</p>
-            </div>
-          )}
-        </div>
+        {renderMediaContent("message")}
+        {message?.message?.caption && (
+          <div className="px-1 pb-2">
+            {" "}
+            <p>{message?.message?.caption}</p>
+          </div>
+        )}
       </div>
       {authUser?._id !== message?.receiverId && (
         <div className="chat-footer opacity-50">{message?.status}</div>
@@ -251,4 +222,4 @@ function Message({ message }) {
   );
 }
 
-export default Message;
+export default memo(Message);

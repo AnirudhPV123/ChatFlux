@@ -1,5 +1,5 @@
 export { default as asyncHandler } from './asyncHandler';
-export { default as uploadOnCloudinary } from './uploadOnCloudinary';
+export { uploadOnCloudinary,deleteOnCloudinary } from './uploadAndDeleteOnCloudinary';
 export { default as CustomError } from './CustomError';
 export { default as CustomResponse } from './CustomResponse';
 export { default as generateOtp } from './generateOtp';

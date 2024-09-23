@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useSocket } from "@/context/SocketContext";
 import { setOnlineUsers } from "@/redux/userSlice";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
@@ -10,7 +10,7 @@ function useGetOnlineUsers() {
   const socket = useSocket();
 
   useEffect(() => {
-    const handleOnlineUsers = (onlineUsers) => {
+    const handleOnlineUsers = (onlineUsers: string[]) => {
       dispatch(setOnlineUsers(onlineUsers));
     };
 

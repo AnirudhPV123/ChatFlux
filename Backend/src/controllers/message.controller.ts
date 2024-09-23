@@ -4,6 +4,7 @@ import {
   CustomResponse,
   uploadOnCloudinary,
   emitSocketEvent,
+  deleteOnCloudinary,
 } from '@/utils';
 import { Conversation } from '@/models/conversation.model';
 import { Message } from '@/models/message.model';
@@ -285,7 +286,7 @@ export const getGroupMessage = asyncHandler(async (req, res, next) => {
                       in: {
                         _id: '$$sender._id',
                         phoneNumber: '$$sender.phoneNumber',
-                        userName: '$$sender.userName',
+                        username: '$$sender.username',
                         avatar: '$$sender.avatar',
                         // Add other fields you want to include, but exclude password and refreshToken
                       },

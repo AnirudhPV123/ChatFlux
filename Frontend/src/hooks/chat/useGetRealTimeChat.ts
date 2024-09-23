@@ -9,13 +9,11 @@ import { setSelectedGroup, setSelectedUser } from "@/redux/userSlice";
 const useGetRealTimeChat = () => {
   const { chats } = useTypedSelector((store) => store.chat);
   const { authUser, selectedGroup } = useTypedSelector((store) => store.user);
-  const { groupMembers } = useTypedSelector((store) => store.temporary);
   const dispatch = useTypedDispatch();
   const socket = useSocket();
 
   useEffect(() => {
     const handleNewChat = (newChat: ChatType) => {
-      console.log("newChat hi bently", newChat);
       if (chats) {
         dispatch(setChats([...chats, newChat]));
       } else {
@@ -36,8 +34,6 @@ const useGetRealTimeChat = () => {
 
   useEffect(() => {
     const handleChatDelete = (id: string) => {
-      console.log("id:", id);
-
       const updatedChats = chats.filter((chat: ChatType) => chat?._id !== id);
       dispatch(setChats(updatedChats));
       dispatch(setSelectedUser(null));
@@ -55,20 +51,22 @@ const useGetRealTimeChat = () => {
   }, [dispatch, socket, chats]);
 
   useEffect(() => {
-    const handleRemoveUserFromGroup = async (userId, groupId) => {
-      console.log("userId", userId);
-      console.log("groupId", groupId);
-
+    const handleRemoveUserFromGroup = async (
+      userId: string,
+      groupId: string,
+    ) => {
       let updatedChats;
       if (authUser?._id === userId) {
-        updatedChats = chats.filter((chat) => chat?._id !== groupId);
+        updatedChats = chats.filter((chat: ChatType) => chat?._id !== groupId);
         dispatch(setSelectedGroup(null));
       } else {
-        updatedChats = chats.map((chat) =>
+        updatedChats = chats.map((chat: ChatType) =>
           chat?._id === groupId
             ? {
                 ...chat,
-                participants: chat.participants.filter((p) => p !== userId),
+                participants: chat.participants.filter(
+                  (p) => p.toString() !== userId,
+                ),
               }
             : chat,
         );
@@ -77,7 +75,6 @@ const useGetRealTimeChat = () => {
         dispatch(setGroupMembers(result?.data?.data[0]));
       }
 
-      console.log("updatedChats", updatedChats);
       dispatch(setChats(updatedChats));
 
       if (selectedGroup?._id === groupId && authUser?._id === userId) {
@@ -94,22 +91,18 @@ const useGetRealTimeChat = () => {
         socket.off("remove-user-from-group", handleRemoveUserFromGroup);
       }
     };
-  }, [dispatch, socket, chats]);
+  }, [dispatch, socket, chats, authUser, selectedGroup]);
 
   useEffect(() => {
-    const handleAddUserToGroup = async (userId, groupId) => {
-      console.log("authUserl", authUser?._id);
-      console.log("userId", userId);
-      console.log("groupId", groupId);
-
+    const handleAddUserToGroup = async (userId: string, groupId: any) => {
       let result;
 
       if (authUser?._id === userId) {
-        // groupid is actually full group object only for the created new user
+        // groupid is full group object only for the created new user and for others gropupId is string
         dispatch(setChats([...chats, groupId]));
         result = await getGroupMembersDetails(groupId._id);
       } else {
-        const updatedChats = chats.map((chat) =>
+        const updatedChats = chats.map((chat: ChatType) =>
           chat?._id === groupId
             ? {
                 ...chat,
@@ -134,30 +127,26 @@ const useGetRealTimeChat = () => {
         socket.off("add-user-to-group", handleAddUserToGroup);
       }
     };
-  }, [dispatch, socket, chats]);
+  }, [dispatch, socket, chats, authUser]);
 
   // leave group
   useEffect(() => {
-    const handleLeaveGroup = async (userId, groupId) => {
-      // const updatedChats =
-      console.log("userId", userId);
-      console.log("groupId", groupId);
-
-      const updatedChats = chats.map((chat) =>
+    const handleLeaveGroup = async (userId: string, groupId: string) => {
+      const updatedChats = chats.map((chat: ChatType) =>
         chat?._id === groupId
           ? {
               ...chat,
-              participants: chat.participants.filter((p) => p !== userId),
+              participants: chat.participants.filter(
+                (p) => p.toString() !== userId,
+              ),
             }
           : chat,
       );
 
       const result = await getGroupMembersDetails(groupId);
-      console.log(result);
-      console.log("result?.data?.data[0]", result?.data?.data[0]);
+
       dispatch(setGroupMembers(result?.data?.data[0]));
 
-      console.log(updatedChats);
       dispatch(setChats(updatedChats));
     };
 
@@ -174,10 +163,11 @@ const useGetRealTimeChat = () => {
 
   // almost same has handleLeaveGroup
   useEffect(() => {
-    const handleDeleteGroup = (groupId) => {
-      const updatedChats = chats.filter((chat) => chat?._id !== groupId);
+    const handleDeleteGroup = (groupId: string) => {
+      const updatedChats = chats.filter(
+        (chat: ChatType) => chat?._id !== groupId,
+      );
 
-      console.log(updatedChats);
       dispatch(setChats(updatedChats));
       if (selectedGroup?._id === groupId) {
         dispatch(setSelectedGroup(null));
@@ -193,7 +183,7 @@ const useGetRealTimeChat = () => {
         socket.off("delete-group", handleDeleteGroup);
       }
     };
-  }, [dispatch, socket, chats]);
+  }, [dispatch, socket, chats, selectedGroup]);
 };
 
 export default useGetRealTimeChat;

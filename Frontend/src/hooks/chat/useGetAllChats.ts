@@ -11,7 +11,6 @@ function useGetAllChats() {
     (async function () {
       try {
         const res = await getAllChats();
-        console.log("get all chats", res);
         dispatch(setChats(res.data?.data));
       } catch (error) {
         const customError = error as CustomError;

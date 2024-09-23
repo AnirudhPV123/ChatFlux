@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import useGetMessages from "@/hooks/message/useGetMessages";
 import Message from "./Message";
 import { useTypedSelector } from "@/hooks/useRedux";

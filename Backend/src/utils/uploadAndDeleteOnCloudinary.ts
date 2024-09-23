@@ -6,8 +6,6 @@ import fs from 'fs';
 cloudinary.config(cloudinaryConfig);
 
 const uploadOnCloudinary = async (localFilePath: string, format: string) => {
-  console.log('file is uploading on cloudinary : ', localFilePath);
-  console.log('format', format);
   try {
     if (!localFilePath) return null;
 
@@ -39,4 +37,13 @@ const uploadOnCloudinary = async (localFilePath: string, format: string) => {
   }
 };
 
-export default uploadOnCloudinary;
+const deleteOnCloudinary = async (publicId: string) => {
+  try {
+    if (!publicId) return null;
+    return await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    return null;
+  }
+};
+
+export { uploadOnCloudinary, deleteOnCloudinary };
