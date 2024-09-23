@@ -4,10 +4,17 @@ import { UserType } from "./userSlice";
 
 type InitialState = {
   chatSearch: ChatType[] | [];
-  groupMembers: Array<{ _id: string }> | [];
+  groupMembers: {
+    _id: string;
+    groupAdmin: string;
+    membersDetails: UserType[];
+  } | null;
+  messageReplyDetails: {
+    status: boolean;
+  };
 };
 
-const initialState = {
+const initialState: InitialState = {
   chatSearch: [],
   messageReplyDetails: { status: false }, //reply message details (messageId,message owner id),
   groupMembers: null,

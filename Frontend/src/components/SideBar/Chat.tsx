@@ -1,6 +1,6 @@
 import { setSelectedGroup, setSelectedUser, UserType } from "@/redux/userSlice";
 import moment from "moment";
-import { setSelectedChat } from "../../redux/userSlice";
+import { setSelectedChat } from "@/redux/userSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import { memo, useMemo } from "react";
 import { ChatType } from "@/redux/chatSlice";
@@ -65,6 +65,7 @@ function Chat({ chat }: { chat: ChatType }) {
           groupName={chat?.groupName}
           isGroup={isGroupChat}
           isOnline={isOnline || false}
+          username={user?.username}
         />
 
         <div>

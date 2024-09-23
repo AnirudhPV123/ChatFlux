@@ -4,6 +4,7 @@ type AvatarProps = {
   avatar?: string;
   size: string;
   isOnline?: boolean;
+  username?: string;
 };
 
 function Avatar({
@@ -12,6 +13,7 @@ function Avatar({
   avatar,
   size,
   isOnline = false,
+  username,
 }: AvatarProps) {
   return (
     <div
@@ -29,9 +31,15 @@ function Avatar({
             isOnline ? "online" : ""
           }`}
         >
-          <div className="rounded-full">
-            <img src={avatar} alt="User Avatar" />
-          </div>
+          {avatar ? (
+            <div className="rounded-full">
+              <img src={avatar} alt="User Avatar" />
+            </div>
+          ) : (
+            <h2 className="text-3xl font-semibold text-black">
+              {username?.charAt(0).toUpperCase()}
+            </h2>
+          )}
         </div>
       )}
     </div>

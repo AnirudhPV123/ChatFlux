@@ -9,6 +9,8 @@ export type ChatType = {
   lastMessageTime: string;
   notification: number;
   avatar?: string;
+  username?: string;
+  groupAdmin?: string;
 };
 
 const chatSlice = createSlice({
