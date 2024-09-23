@@ -31,8 +31,8 @@ api.interceptors.response.use(
       return api.request(originalRequest);
     } else if (statusCode === 403) {
       handleUnauthorized();
-      return Promise.reject(error);
     }
+    return Promise.reject(error);
   },
 );
 

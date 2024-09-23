@@ -6,6 +6,9 @@ export type ChatType = {
   isGroupChat: boolean;
   participants: UserType[];
   groupName: string;
+  lastMessageTime: string;
+  notification: number;
+  avatar?: string;
 };
 
 const chatSlice = createSlice({

@@ -3,6 +3,8 @@ class CustomError extends Error {
   public success: boolean;
   public errors: any[];
   public data: any | null;
+  public status: string;
+  public message: string;
 
   constructor(
     statusCode: number,
@@ -16,6 +18,7 @@ class CustomError extends Error {
     this.success = false;
     this.errors = errors;
     this.data = null; // Assuming this is intended to be null by default
+    this.status = statusCode >= 400 && statusCode < 500 ? 'failed' : 'error';
 
     if (stack) {
       this.stack = stack;

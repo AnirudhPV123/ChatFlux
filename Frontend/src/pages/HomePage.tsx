@@ -5,6 +5,7 @@ import useGetRealTimeMessage from "@/hooks/message/useGetRealTimeMessage";
 import useGetOnlineUsers from "@/hooks/chat/useGetOnlineUsers";
 
 function HomePage() {
+  // TODO: useGetOnlineusers later
   useGetOnlineUsers();
   useGetRealTimeMessage();
   useGetRealTimeChat();

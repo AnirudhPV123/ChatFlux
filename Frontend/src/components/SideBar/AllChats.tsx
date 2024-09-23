@@ -9,10 +9,9 @@ function AllChats() {
 
   const { chats } = useTypedSelector((store) => store.chat);
   const { chatSearch } = useTypedSelector((store) => store.temporary);
-  console.log("chats asll", chats);
 
   const chatList = useMemo(() => {
-    return chats?.map((chat: { _id: string }) => {
+    return chats?.map((chat: ChatType) => {
       if (
         (chatSearch &&
           chatSearch.length > 0 &&

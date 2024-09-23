@@ -2,20 +2,26 @@ import { setSelectedGroup, setSelectedUser, UserType } from "@/redux/userSlice";
 import moment from "moment";
 import { setSelectedChat } from "../../redux/userSlice";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
-import { memo, useEffect } from "react";
+import { memo, useMemo } from "react";
 import { ChatType } from "@/redux/chatSlice";
+import Avatar from "../Avatar";
 
 function Chat({ chat }: { chat: ChatType }) {
   const { authUser, onlineUsers } = useTypedSelector((store) => store.user);
   const dispatch = useTypedDispatch();
   const isGroupChat = chat?.isGroupChat;
 
-  const user = isGroupChat
-    ? null
-    : chat.participants.find(
-        (participant) => participant._id !== authUser?._id,
-      );
-  const isOnline = !isGroupChat && user && onlineUsers?.includes(user?._id);
+  const user = useMemo(() => {
+    return isGroupChat
+      ? null
+      : chat.participants.find(
+          (participant: UserType) => participant._id !== authUser?._id,
+        );
+  }, [isGroupChat, chat.participants, authUser]);
+
+  const isOnline = useMemo(() => {
+    return !isGroupChat && user && onlineUsers?.includes(user._id as never);
+  }, [isGroupChat, user, onlineUsers]);
 
   const handleSelectUser = () => {
     // conditional setup selectedUser or selectedGroup
@@ -28,22 +34,24 @@ function Chat({ chat }: { chat: ChatType }) {
     }
     dispatch(setSelectedChat(chat));
   };
-  const formatLastMessageTime = (lastMessageTime) => {
+  const formatLastMessageTime = (lastMessageTime: string) => {
     const messageTime = moment(lastMessageTime);
     const now = moment();
 
     if (now.diff(messageTime, "hours") < 24) {
       return messageTime.format("H:mm a"); // Show hour and minute if less than 24 hours
-    } else if (48 > now.diff(messageTime, "hours") > 24) {
+    } else if (now.diff(messageTime, "hours") < 48) {
       return "Yesterday";
     } else {
-      return messageTime.format("DD/MM/YYYY"); // Show date if 24 hours or more
+      return messageTime.format("DD/MM/YYYY");
     }
   };
 
   // Usage
-  const lastMessageTime = chat?.lastMessageTime;
-  const formattedTime = formatLastMessageTime(lastMessageTime);
+  const formattedTime = useMemo(
+    () => formatLastMessageTime(chat?.lastMessageTime),
+    [chat?.lastMessageTime],
+  );
 
   return (
     <div
@@ -51,30 +59,18 @@ function Chat({ chat }: { chat: ChatType }) {
       onClick={handleSelectUser}
     >
       <div className="user-info flex h-full w-3/6 items-center gap-4">
-        {/* conditional avatar setup */}
-        {isGroupChat ? (
-          <div className="flex aspect-square h-4/6 items-center justify-center rounded-full bg-primary">
-            <h2 className="text-3xl font-semibold text-black">
-              {chat?.groupName.charAt(0).toUpperCase()}
-            </h2>
-          </div>
-        ) : (
-          <div
-            className={`avatar flex aspect-square h-4/6 items-center justify-center rounded-full bg-primary ${
-              isOnline ? "online" : ""
-            }`}
-          >
-            <div className="rounded-full">
-              <img src={user?.avatar} alt="User Avatar" />
-            </div>
-          </div>
-        )}
+        <Avatar
+          size="h-14 w-14"
+          avatar={user?.avatar}
+          groupName={chat?.groupName}
+          isGroup={isGroupChat}
+          isOnline={isOnline || false}
+        />
 
         <div>
           <h3 className="whitespace-nowrap text-lg font-semibold">
             {isGroupChat ? chat.groupName : user?.username}
           </h3>
-          {/* <h4 className="text-sm text-gray-400">No messages yet</h4> */}
         </div>
       </div>
       <div className="message-info flex flex-col gap-2 text-xs">

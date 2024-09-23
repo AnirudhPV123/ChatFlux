@@ -13,10 +13,11 @@ const globalErrorHandler = (error: AppError, req: Request, res: Response, next: 
   const status = error.status || 'error';
   const isOperational = error.isOperational || false;
   const stack = error.stack || 'No error stack available.';
+  const message = error.message || 'Something went wrong.';
 
   // Log the error details with more context
   logger.error({
-    message: error.message,
+    message,
     statusCode,
     status,
     isOperational,
@@ -27,18 +28,19 @@ const globalErrorHandler = (error: AppError, req: Request, res: Response, next: 
 
   // Send a detailed error response in development, but a generic one in production
   if (process.env.NODE_ENV === 'development') {
-    res.status(statusCode).json({ 
+    console.log('here', message);
+    return res.status(statusCode).json({
       statusCode,
       status,
       isOperational,
-      message: error.message,
+      message,
       stack,
     });
   } else {
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       statusCode,
       status,
-      message: isOperational ? error.message : 'An unexpected error occurred',
+      message: isOperational ? message : 'An unexpected error occurred',
     });
   }
 };

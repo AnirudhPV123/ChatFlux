@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  memo,
+} from "react";
 import { X } from "lucide-react";
 import { UserType } from "@/redux/userSlice";
 
@@ -36,21 +43,22 @@ const UserOptions = ({
     );
   }, [value, options]);
 
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (
+      autocompleteRef.current &&
+      !autocompleteRef.current.contains(event.target as Node)
+    ) {
+      setShowSuggestions(false);
+    }
+  }, []);
+
   // Handle click outside of autocomplete to close suggestions
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        autocompleteRef.current &&
-        !autocompleteRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
     document.addEventListener("click", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
   // Handle input change
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,18 +67,20 @@ const UserOptions = ({
   };
 
   // Handle suggestion click
-  const handleSuggestionClick = (suggestion: UserType) => {
-    if (isGroup) {
-      if (!groupUsers.some((u) => u._id === suggestion._id)) {
-        setGroupUsers([...groupUsers, suggestion]);
-        setValue("");
+  const handleSuggestionClick = useCallback(
+    (suggestion: UserType) => {
+      if (isGroup) {
+        if (!groupUsers.some((u) => u._id === suggestion._id)) {
+          setGroupUsers([...groupUsers, suggestion]);
+        }
+      } else {
+        setUser(suggestion);
       }
-    } else {
-      setUser(suggestion);
       setValue("");
-    }
-    setShowSuggestions(false);
-  };
+      setShowSuggestions(false);
+    },
+    [groupUsers, isGroup, setGroupUsers, setUser],
+  );
 
   // Delete user from one-on-one chat
   const handleDeleteUser = () => {
@@ -80,9 +90,12 @@ const UserOptions = ({
   };
 
   // Delete user from group chat
-  const handleDeleteGroupUser = (userId: string) => {
-    setGroupUsers(groupUsers.filter((user) => user._id !== userId));
-  };
+  const handleDeleteGroupUser = useCallback(
+    (userId: string) => {
+      setGroupUsers(groupUsers.filter((user) => user._id !== userId));
+    },
+    [groupUsers, setGroupUsers],
+  );
 
   // Reset form fields when group status changes
   useEffect(() => {
@@ -150,8 +163,13 @@ const UserOptions = ({
               key={user._id}
               className="flex items-center gap-x-2 rounded-full border-2 border-gray-600 bg-[#1D232A] px-4 py-2 outline-none"
             >
-              <div className="w-8 overflow-hidden rounded-full">
-                <img src={user?.avatar} alt="User Avatar" />
+              <div className="flex h-8 w-8 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary">
+                {user?.avatar && <img src={user.avatar} alt="" />}
+                {!user?.avatar && (
+                  <h2 className="text-3xl font-semibold text-black">
+                    {user.username.charAt(0).toUpperCase()}
+                  </h2>
+                )}
               </div>
               <h2>{user.username}</h2>
               <div className="flex justify-center rounded-full bg-neutral p-1">
@@ -169,4 +187,4 @@ const UserOptions = ({
   );
 };
 
-export default UserOptions;
+export default memo(UserOptions);

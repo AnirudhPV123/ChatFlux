@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import UserOptions from "./UserOptions";
 import { createAGroupChat, createAOneOnOneChat } from "@/services/api/chat";
 import { setChats } from "@/redux/chatSlice";
@@ -7,11 +7,11 @@ import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import { UserType } from "@/redux/userSlice";
 import { CustomErrorType } from "@/types";
 
-function ChatCreateOptions({
-  setAddChat,
-}: {
+type ChatCreateOptionsProps = {
   setAddChat: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
+};
+
+function ChatCreateOptions({ setAddChat }: ChatCreateOptionsProps) {
   const { chats } = useTypedSelector((store) => store.chat);
   const { availableUsers } = useTypedSelector((store) => store.user);
 
@@ -26,40 +26,36 @@ function ChatCreateOptions({
   const dispatch = useTypedDispatch();
 
   const handleCreateChat = async () => {
+    // Validate form fields
+    if (!isGroup && !user) {
+      setError(true);
+      return;
+    }
+    if (isGroup && !groupName) {
+      setError(true);
+      return;
+    }
+
     setLoading(true);
+    setError(false);
     try {
-      // Validate form fields
-      if (!isGroup && user !== null && Object.keys(user).length === 0) {
-        setError(true);
-        return;
-      }
-      if (isGroup && (!groupName || groupUsers.length === 0)) {
-        setError(true);
-        return;
-      }
-
-      setError(false);
-
       if (!isGroup) {
         // Create one-on-one chat
         const res = await createAOneOnOneChat(user?._id);
         dispatch(setChats([...chats, res.data.data[0]]));
         toast.success("Chat created successfully");
+        setUser(null);
       } else {
         // Create group chat
         const participants = groupUsers.map((user) => user._id);
-        console.log("create group chat", participants, groupName);
         const res = await createAGroupChat({ participants, groupName });
         dispatch(setChats([...chats, res.data.data[0]]));
         toast.success("Group chat created successfully");
+        setGroupUsers([]);
+        setGroupName("");
       }
-
-      // Reset form fields after successful creation
-      setUser(null);
-      setGroupUsers([]);
-      setGroupName("");
-    } catch (error) {
-      const customError = error as CustomErrorType;
+    } catch (err) {
+      const customError = err as CustomErrorType;
       toast.error(
         customError?.response?.data?.message ||
           "Something went wrong while creating chat.",
@@ -68,6 +64,12 @@ function ChatCreateOptions({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      setError(false);
+    }
+  }, [user]);
 
   return (
     <div className="absolute left-0 top-0 z-20 h-full w-full backdrop-blur-sm">
@@ -80,7 +82,10 @@ function ChatCreateOptions({
                 type="checkbox"
                 className="toggle toggle-primary mr-4"
                 checked={isGroup}
-                onChange={() => setIsGroup((status) => !status)}
+                onChange={() => {
+                  setIsGroup((status) => !status);
+                  setError(false);
+                }}
               />
               <span className="label-text">Is it a group chat?</span>
             </label>
@@ -130,4 +135,4 @@ function ChatCreateOptions({
   );
 }
 
-export default ChatCreateOptions;
+export default memo(ChatCreateOptions);

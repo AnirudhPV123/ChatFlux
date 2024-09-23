@@ -19,7 +19,7 @@ export type UserType = {
 type UserSlice = {
   authUser: UserType | null;
   isAuthUser: boolean;
-  onlineUsers: UserType[] | [];
+  onlineUsers: string[] | [];
   availableUsers: UserType[] | [];
   selectedUser: ChatType | null;
   selectedGroup: ChatType | null;

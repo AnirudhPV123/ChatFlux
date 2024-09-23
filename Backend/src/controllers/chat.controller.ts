@@ -39,7 +39,7 @@ export const createAOneOnOneChat = asyncHandler(async (req, res, next) => {
   });
 
   if (conversation && conversation?.isGroupChat === false) {
-    return next(new CustomError(400, 'Chat already exist'));
+    throw new CustomError(400, 'Chat already exist');
   }
 
   conversation = await Conversation.create({
@@ -293,7 +293,7 @@ export const deleteChat = asyncHandler(async (req, res, next) => {
   const result = await Conversation.findByIdAndDelete(chatId);
 
   if (!result) {
-    return res.status(500).json(new CustomError(500, 'Server error.'));
+    throw new CustomError(500, 'Server error.');
   }
 
   await emitSocketEvent(userId, 'chat_deleted', result._id);

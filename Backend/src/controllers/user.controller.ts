@@ -150,7 +150,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
     .json(new CustomResponse(200, userWithoutSensitiveInfo, 'Password reset successfully.'));
 });
 
-export const login = asyncHandler(async (req:Request, res:Response) => {
+export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = validateRequest({
     schema: emailAndPasswordValidator,
     data: req.body,
@@ -244,7 +244,8 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-  const incomingRefreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.header('Authorization')?.replace('Bearer ', '');
 
   if (!incomingRefreshToken) {
     throw new CustomError(403, 'Refresh token required.');
