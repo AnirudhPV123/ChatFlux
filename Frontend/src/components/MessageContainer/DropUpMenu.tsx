@@ -6,7 +6,7 @@ import {
   Paperclip,
   SendHorizontal,
 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 import { sendFileMessage, sendGroupFileMessage } from "@/services/api/message";
@@ -14,17 +14,13 @@ import { setMessages, setUpdateMessage } from "@/redux/messageSlice";
 import CameraCapture from "./Camera";
 import { createTemporaryMessage } from "@/utils/createTemporaryMessage";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
+import CustomError from "@/types/CustomErrorType";
 
 const DropUpMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState("");
   const [caption, setCaption] = useState("");
   const [isCamera, setIsCamera] = useState(false);
-
-  useEffect(() => {
-    console.log("file file:", file);
-  }, [file]);
 
   const [capturedVideo, setCapturedVideo] = useState<File | null>(null);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
@@ -40,16 +36,12 @@ const DropUpMenu = () => {
 
   const dispatch = useTypedDispatch();
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
+  const toggleMenu = () => setIsOpen((prev) => !prev);
 
-  const handleFileFolderClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handlePhotoAndVideoFolderClick = () => {
-    photoAndVideoInputRef.current?.click();
+  const handleFileInputClick = (
+    inputRef: React.RefObject<HTMLInputElement>,
+  ) => {
+    inputRef.current?.click();
   };
 
   useEffect(() => {
@@ -85,8 +77,6 @@ const DropUpMenu = () => {
   };
 
   const handleSendFile = useCallback(async () => {
-    console.log("file fuck file:", file);
-
     const formData = new FormData();
 
     let cameraPhotoFile;
@@ -96,18 +86,16 @@ const DropUpMenu = () => {
       typeof capturedPhoto === "string" &&
       capturedPhoto.startsWith("data:")
     ) {
-      const mimeType = capturedPhoto.match(/data:(.*);base64,/)[1] || "";
+      const mimeType = capturedPhoto.match(/data:(.*);base64,/)?.[1] || "";
       cameraPhotoFile = base64ToBlob(capturedPhoto, mimeType);
       formData.append("file", cameraPhotoFile, "image.jpeg"); // Change the name as needed
     } else if (capturedVideo) {
       formData.append("file", capturedVideo, "video.webm");
     } else if (file) {
-      console.log("check fil ehere");
       formData.append("file", file);
     }
 
     formData.append("caption", caption);
-    console.log("formData", formData);
 
     const tempMessageId = `temp-${Date.now()}`;
 
@@ -115,16 +103,23 @@ const DropUpMenu = () => {
     // temporary message
     const temporaryMessage = createTemporaryMessage({
       content: URL.createObjectURL(
-        capturedPhoto ? cameraPhotoFile : capturedVideo ? capturedVideo : file,
+        (capturedPhoto
+          ? cameraPhotoFile
+          : capturedVideo
+            ? capturedVideo
+            : file) as Blob, // Ensure type
       ),
       type: capturedPhoto
         ? "image"
         : capturedVideo
           ? "video"
-          : file.type.split("/")[0],
-      format: capturedPhoto || capturedVideo ? "webm" : file.type.split("/")[1],
+          : (file?.type.split("/")[0] as string),
+      format:
+        capturedPhoto || capturedVideo
+          ? "webm"
+          : (file?.type.split("/")[1] as string),
       tempMessageId,
-      senderId: authUser._id,
+      senderId: authUser?._id as string,
       caption,
       ...(selectedUser && {
         conversationId: selectedChat?._id,
@@ -141,27 +136,24 @@ const DropUpMenu = () => {
     );
     setFile(null);
     setIsOpen(false);
-    setFileType("");
     setCaption("");
-    setCapturedPhoto("");
-    setCapturedVideo("");
+    setCapturedPhoto(null);
+    setCapturedVideo(null);
 
     try {
-      let res;
-      if (selectedUser) {
-        res = await sendFileMessage(selectedUser._id, formData);
-      } else if (selectedGroup) {
-        res = await sendGroupFileMessage(selectedGroup._id, formData);
-      }
+      const res = selectedUser
+        ? await sendFileMessage(selectedUser?._id, formData)
+        : await sendGroupFileMessage(selectedGroup?._id, formData);
 
-      if (res && res.data && res.data.data) {
+      if (res?.data?.data) {
         dispatch(
           setUpdateMessage({ tempMessageId, newMessage: res.data.data }),
         );
       }
-    } catch (error: any) {
+    } catch (error) {
+      const customError = error as CustomError;
       toast.error(
-        error.response?.data?.message ||
+        customError.response?.data?.message ||
           "An error occurred while sending the message.",
       );
     }
@@ -174,6 +166,8 @@ const DropUpMenu = () => {
     dispatch,
     messages,
     authUser,
+    selectedChat,
+    selectedGroup,
   ]);
 
   const renderFilePreview = () => {
@@ -237,7 +231,7 @@ const DropUpMenu = () => {
           <ul className="flex flex-col">
             <li
               className="flex cursor-pointer items-center rounded-md p-2 hover:bg-gray-700"
-              onClick={handleFileFolderClick}
+              onClick={() => handleFileInputClick(fileInputRef)}
             >
               <FolderClosed
                 strokeWidth={3}
@@ -253,7 +247,7 @@ const DropUpMenu = () => {
             </li>
             <li
               className="flex cursor-pointer items-center rounded-md p-2 hover:bg-gray-700"
-              onClick={handlePhotoAndVideoFolderClick}
+              onClick={() => handleFileInputClick(photoAndVideoInputRef)}
             >
               <Images
                 strokeWidth={3}
@@ -325,9 +319,9 @@ const DropUpMenu = () => {
         <CameraCapture
           isCamera={isCamera}
           setIsCamera={setIsCamera}
-          capturedPhoto={capturedPhoto}
+          capturedPhoto={capturedPhoto as string}
           setCapturedPhoto={setCapturedPhoto}
-          capturedVideo={capturedVideo}
+          capturedVideo={capturedVideo as File}
           setCapturedVideo={setCapturedVideo}
           handleSendFile={handleSendFile}
         />

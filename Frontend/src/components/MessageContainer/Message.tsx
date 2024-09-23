@@ -100,8 +100,8 @@ function Message({ message }) {
             {isSender
               ? "You"
               : selectedUser
-                ? selectedUser?.userName
-                : selectedGroup && message?.senderDetails?.userName}
+                ? selectedUser?.username
+                : selectedGroup && message?.senderDetails?.username}
           </p>
           <div className="flex items-center gap-4">
             <time className="text-xs opacity-50">{normalTime}</time>
@@ -132,6 +132,11 @@ function Message({ message }) {
                         replyMessageUserId: message.senderId,
                         status: true,
                         messageToPopUp: message?.message,
+                        senderUsername: isSender
+                          ? "You"
+                          : selectedUser
+                            ? selectedUser?.username
+                            : selectedGroup && message?.senderDetails?.username,
                       }),
                     );
                 }}
@@ -154,9 +159,9 @@ function Message({ message }) {
             >
               {selectedUser &&
               replyMessageDetails?.senderId === selectedUser?._id
-                ? selectedUser?.userName
+                ? selectedUser?.username
                 : selectedGroup && replyGroupMessageSender
-                  ? replyGroupMessageSender?.userName
+                  ? replyGroupMessageSender?.username
                   : "You"}
             </p>
             {replyMessageDetails?.message?.content && (

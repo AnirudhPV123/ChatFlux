@@ -10,13 +10,21 @@ type InitialState = {
     membersDetails: UserType[];
   } | null;
   messageReplyDetails: {
+    replyMessageId: boolean;
+    replyMessageUserId: string;
+    senderUsername: string;
     status: boolean;
-  };
+    messageToPopUp: {
+      content: string;
+      type: string;
+      format: string;
+    };
+  } | null;
 };
 
 const initialState: InitialState = {
   chatSearch: [],
-  messageReplyDetails: { status: false }, //reply message details (messageId,message owner id),
+  messageReplyDetails: null, //reply message details (messageId,message owner id),
   groupMembers: null,
   // selectedChat:null
 };
@@ -39,7 +47,7 @@ const temporarySlice = createSlice({
     },
     resetTemporarySlice: (state) => {
       state.chatSearch = [];
-      state.messageReplyDetails = { status: false };
+      state.messageReplyDetails = null;
       state.groupMembers = null;
     },
   },

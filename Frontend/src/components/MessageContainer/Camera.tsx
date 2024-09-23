@@ -1,6 +1,17 @@
 import { Camera, CircleX, SendHorizontal, Trash2, Video } from "lucide-react";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, memo } from "react";
+import toast from "react-hot-toast";
 import Webcam from "react-webcam";
+
+type CameraCaptureProps = {
+  isCamera: boolean;
+  setIsCamera: React.Dispatch<React.SetStateAction<boolean>>;
+  capturedPhoto: string;
+  capturedVideo: File;
+  setCapturedPhoto: React.Dispatch<React.SetStateAction<string | null>>;
+  setCapturedVideo: React.Dispatch<React.SetStateAction<File | null>>;
+  handleSendFile: () => Promise<void>;
+};
 
 const CameraCapture = ({
   isCamera,
@@ -10,21 +21,21 @@ const CameraCapture = ({
   setCapturedPhoto,
   setCapturedVideo,
   handleSendFile,
-}) => {
+}: CameraCaptureProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedChunks, setRecordedChunks] = useState([]);
 
   const [isVideo, setIsVideo] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
 
-  const webcamRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const timerRef = useRef(null);
+  const webcamRef = useRef<Webcam>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const timerRef = useRef<number | null>(null);
 
-  const handleCapturePhoto = React.useCallback(() => {
-    const imageSrc = webcamRef.current.getScreenshot();
-    setCapturedPhoto(imageSrc);
-  }, [webcamRef]);
+  const handleCapturePhoto = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    setCapturedPhoto(imageSrc as string);
+  }, [webcamRef, setCapturedPhoto]);
 
   const videoConstraints = {
     width: 720,
@@ -32,40 +43,45 @@ const CameraCapture = ({
     facingMode: "user",
   };
 
-  const handleStartCaptureVideo = useCallback(() => {
-    setIsRecording(true);
-    mediaRecorderRef.current = new MediaRecorder(webcamRef.current.stream, {
-      mimeType: "video/webm",
-    });
-    mediaRecorderRef.current.addEventListener(
-      "dataavailable",
-      handleDataAvailable
-    );
-    mediaRecorderRef.current.start();
-
-    // Start timer
-    timerRef.current = setInterval(() => {
-      setRecordingTime((prevTime) => prevTime + 1);
-    }, 1000);
-  }, [webcamRef, setIsRecording]);
-
-  const handleDataAvailable = useCallback(({ data }) => {
+  const handleDataAvailable = useCallback(({ data }: { data: any }) => {
     if (data.size > 0) {
       setRecordedChunks((prev) => prev.concat(data));
     }
   }, []);
 
+  const handleStartCaptureVideo = useCallback(() => {
+    setIsRecording(true);
+    const stream = webcamRef.current?.stream;
+    if (stream) {
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: "video/webm",
+      });
+      mediaRecorderRef.current.addEventListener(
+        "dataavailable",
+        handleDataAvailable,
+      );
+      mediaRecorderRef.current.start();
+
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prevTime) => prevTime + 1);
+      }, 1000);
+    } else {
+      toast.error("Webcam stream is not available");
+    }
+  }, [webcamRef, setIsRecording, handleDataAvailable]);
+
   const handleStopCaptureVideo = useCallback(() => {
-    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current?.stop();
     setIsRecording(false);
     setRecordingTime(0);
-    clearInterval(timerRef.current); // Stop timer
-  }, [mediaRecorderRef, webcamRef, setIsRecording]);
+    clearInterval(timerRef.current as number); // Stop timer
+  }, [mediaRecorderRef, setIsRecording]);
 
   useEffect(() => {
     if (recordedChunks.length) {
       const blob = new Blob(recordedChunks, { type: "video/webm" });
-      setCapturedVideo(blob);
+      setCapturedVideo(blob as File);
       setRecordedChunks([]);
     }
   }, [recordedChunks]);
@@ -94,21 +110,24 @@ const CameraCapture = ({
   };
 
   useEffect(() => {
-    let timer;
+    let timer: number | null = null;
     if (isRecording) {
-      timer = setTimeout(() => {
-        setRecordingTime(0);
-        handleStopCaptureVideo(); // Assuming you have a function to stop video capture
-      }, 5 * 60 * 1000); // 5 minutes in milliseconds
+      timer = setTimeout(
+        () => {
+          setRecordingTime(0);
+          handleStopCaptureVideo(); // Assuming you have a function to stop video capture
+        },
+        5 * 60 * 1000,
+      ); // 5 minutes in milliseconds
     }
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timer as number);
   }, [isRecording]);
 
   return (
-    <div className="backdrop-blur-sm top-0 left-0 w-full h-full z-20 absolute ">
-      <div className="w-1/3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#1D232A] border border-gray-400 rounded-lg p-4">
-        <div className="flex justify-between mb-4">
+    <div className="absolute left-0 top-0 z-20 h-full w-full backdrop-blur-sm">
+      <div className="absolute left-1/2 top-1/2 w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-400 bg-[#1D232A] p-4">
+        <div className="mb-4 flex justify-between">
           {isRecording ? (
             <h4>{`${Math.floor(recordingTime / 60)
               .toString()
@@ -118,24 +137,16 @@ const CameraCapture = ({
           ) : (
             <div></div>
           )}
-          {capturedPhoto ? (
-            <p>
-              {Math.round(capturedPhoto.size / 1024) < 1024
-                ? Math.round(capturedPhoto.size / 1024) + " KB"
-                : Math.round(capturedPhoto.size / (1024 * 1024)) + " MB"}
-            </p>
-          ) : capturedVideo ? (
+          {capturedVideo && (
             <p>
               {Math.round(capturedVideo.size / 1024) < 1024
                 ? Math.round(capturedVideo.size / 1024) + " KB"
                 : Math.round(capturedVideo.size / (1024 * 1024)) + " MB"}
             </p>
-          ) : (
-            <div></div>
           )}
           {capturedPhoto || capturedVideo ? (
             <Trash2
-              className="text-primary cursor-pointer"
+              className="cursor-pointer text-primary"
               strokeWidth={2}
               size={30}
               onClick={handleDelete}
@@ -183,19 +194,19 @@ const CameraCapture = ({
         )}
 
         {/* bottom buttons */}
-        <div className="flex justify-center items-center mt-2">
+        <div className="mt-2 flex items-center justify-center">
           {/* capture btn */}
           <button
-            className="h-12 w-12 rounded-full bg-gray-400 border-4 border-black"
+            className="h-12 w-12 rounded-full border-4 border-black bg-gray-400"
             onClick={handleCapture}
           >
-            <div className="h-8 w-8 rounded-full m-auto border-4 border-black"></div>
+            <div className="m-auto h-8 w-8 rounded-full border-4 border-black"></div>
           </button>
           {/* photo btn */}
           <div
             className={`${
               !isVideo && "bg-gray-700"
-            } ml-4 p-2 rounded-full cursor-pointer`}
+            } ml-4 cursor-pointer rounded-full p-2`}
             onClick={() => {
               setIsVideo(false);
               setIsRecording(false);
@@ -208,7 +219,7 @@ const CameraCapture = ({
           <div
             className={`${
               isVideo && "bg-gray-700"
-            } ml-4 p-2 rounded-full cursor-pointer`}
+            } ml-4 cursor-pointer rounded-full p-2`}
             onClick={() => {
               setIsVideo(true);
               setCapturedPhoto(null);
@@ -219,7 +230,10 @@ const CameraCapture = ({
           <div
             className="absolute right-4 cursor-pointer"
             onClick={() => {
-              (capturedPhoto || capturedVideo) && handleSendFile(); setIsCamera(false)
+              if (capturedPhoto || capturedVideo) {
+                handleSendFile();
+              }
+              setIsCamera(false);
             }}
           >
             <SendHorizontal
@@ -234,4 +248,4 @@ const CameraCapture = ({
   );
 };
 
-export default CameraCapture;
+export default memo(CameraCapture);
