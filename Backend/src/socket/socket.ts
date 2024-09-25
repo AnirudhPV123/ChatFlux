@@ -4,6 +4,7 @@ import { redisClient } from '@/config';
 import express, { Application } from 'express';
 import http from 'http';
 import { Message } from '@/models/message.model';
+import { User } from '@/models/user.model';
 
 export const app: Application = express();
 export const server = http.createServer(app);
@@ -81,6 +82,48 @@ io.on('connection', async (socket) => {
       );
     })();
   });
+
+  // Call logics
+  socket.on('user:call', async ({ toUserId, offer }) => {
+    const toSocketId = await getUserSocketId(toUserId);
+    const callerDetails = await User.findById(userId);
+    if (toSocketId) {
+      io.to(toSocketId).emit('incoming:call', { from: socket.id, offer, callerDetails });
+      io.to(socket.id).emit('user:socket:id', { to: toSocketId });
+    }
+  });
+
+  socket.on('call:accepted', ({ to, ans }) => {
+    io.to(to).emit('call:accepted', { from: socket.id, ans });
+  });
+
+  socket.on('peer:nego:needed', async ({ to, offer }) => {
+    io.to(to).emit('peer:nego:needed', {
+      from: socket.id,
+      offer,
+    });
+  });
+
+  socket.on('peer:nego:done', ({ to, ans }) => {
+    io.to(to).emit('peer:nego:done', {
+      from: socket.id,
+      ans,
+    });
+  });
+
+  socket.on('call:hangup', ({ to }) => {
+    io.to(to).emit('call:hangup');
+  });
+
+  socket.on('call:rejected', ({ to }) => {
+    io.to(to).emit('call:rejected');
+  });
+
+  socket.on('call:stop', ({ to }) => {
+    io.to(to).emit('call:stop');
+  });
+
+  // end
 
   socket.on('disconnect', async () => {
     console.log('user disconnected');

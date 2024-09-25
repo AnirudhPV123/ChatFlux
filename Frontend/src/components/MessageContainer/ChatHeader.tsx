@@ -7,6 +7,7 @@ import useGetAvailableUsers from "@/hooks/chat/useGetAvailableUsers";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import Avatar from "../Avatar";
 import ChatDetails from "./ChatDetails";
+import VideoCall from "./VideoCall";
 
 function ChatHeader() {
   useGetAvailableUsers();
@@ -95,6 +96,8 @@ function ChatHeader() {
             <h4 className="text-xs text-gray-400">{isUserOnline}</h4>
           )}{" "}
         </div>
+
+        <VideoCall />
       </div>
 
       {showChatDetails && (
