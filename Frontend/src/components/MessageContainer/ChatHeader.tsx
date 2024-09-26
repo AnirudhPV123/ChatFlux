@@ -1,13 +1,16 @@
 import { ArrowBigLeft } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { setSelectedGroup, setSelectedUser } from "@/redux/userSlice";
+import { setSelectedGroup, setSelectedUser, UserType } from "@/redux/userSlice";
 import { getGroupMembersDetails } from "@/services/api/chat";
 import { setGroupMembers } from "@/redux/temporarySlice";
 import useGetAvailableUsers from "@/hooks/chat/useGetAvailableUsers";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import Avatar from "../Avatar";
 import ChatDetails from "./ChatDetails";
-import VideoCall from "./VideoCall";
+import VideoCall, { OfferFromServer } from "./VideoCall";
+import { useSocket } from "@/context/SocketContext";
+import peer from "@/services/webrtc/peer";
+import { IoCall, IoVideocam } from "react-icons/io5";
 
 function ChatHeader() {
   useGetAvailableUsers();
@@ -21,6 +24,20 @@ function ChatHeader() {
   const dispatch = useTypedDispatch();
   const chatDetailsRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
+
+  // chages
+  const [isCalling, setIsCalling] = useState(false);
+  const [isIncoming, setIsIncoming] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [myStream, setMyStream] = useState<MediaStream | null>(null);
+  const [offer, setOffer] = useState<
+    RTCSessionDescriptionInit | undefined | null
+  >(null);
+  const remoteSocketIdRef = useRef<string | null>(null);
+  const callerDetailsRef = useRef<UserType | null>(null);
+  const isVideoRef = useRef(false);
+
+  const socket = useSocket();
 
   const handleBackClick = useCallback(() => {
     dispatch(setSelectedUser(null));
@@ -64,6 +81,50 @@ function ChatHeader() {
       : "Offline";
   }, [onlineUsers, selectedUser]);
 
+  // chages state to call user
+  const handleCallUser = useCallback(
+    async ({ isVideo }: { isVideo: boolean }) => {
+      setIsCalling(true);
+      isVideoRef.current = isVideo;
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: isVideo,
+        audio: true,
+      });
+      const offer = await peer.getOffer();
+      socket?.emit("user:call", {
+        toUserId: selectedUser?._id,
+        offer,
+        isVideo,
+      });
+      setMyStream(stream);
+    },
+    [socket, selectedUser],
+  );
+
+  const handleIncomingCall = useCallback(
+    async ({ from, offer, callerDetails, isVideo }: OfferFromServer) => {
+      setIsIncoming(true);
+      console.log(from, offer, callerDetails, isVideo);
+      if (from && callerDetails && isVideo !== undefined) {
+        isVideoRef.current = isVideo;
+        console.log("isVideo", isVideo);
+        callerDetailsRef.current = callerDetails;
+        remoteSocketIdRef.current = from;
+      }
+      setOffer(offer);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    socket?.on("incoming:call", handleIncomingCall);
+
+    return () => {
+      socket?.off("incoming:call", handleIncomingCall);
+    };
+  }, [socket, handleIncomingCall]);
+
   return (
     <div className="relative">
       <div className="ml-4 flex flex-shrink-0 items-center border-b border-gray-700 py-2">
@@ -97,7 +158,34 @@ function ChatHeader() {
           )}{" "}
         </div>
 
-        <VideoCall />
+        <div className="absolute right-6 flex gap-6">
+          <IoVideocam
+            className="h-6 w-6 cursor-pointer"
+            onClick={() => handleCallUser({ isVideo: true })}
+          />
+          <IoCall
+            className="h-6 w-6 cursor-pointer"
+            onClick={() => handleCallUser({ isVideo: false })}
+          />
+        </div>
+
+        {(isCalling || isIncoming || isConnected) && (
+          <VideoCall
+            myStream={myStream}
+            offer={offer}
+            isIncoming={isIncoming}
+            isCalling={isCalling}
+            isConnected={isConnected}
+            remoteSocketIdRef={remoteSocketIdRef}
+            callerDetailsRef={callerDetailsRef}
+            setMyStream={setMyStream}
+            setOffer={setOffer}
+            setIsIncoming={setIsIncoming}
+            setIsCalling={setIsCalling}
+            setIsConnected={setIsConnected}
+            isVideoRef={isVideoRef}
+          />
+        )}
       </div>
 
       {showChatDetails && (

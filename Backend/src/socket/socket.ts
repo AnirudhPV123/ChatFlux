@@ -84,11 +84,11 @@ io.on('connection', async (socket) => {
   });
 
   // Call logics
-  socket.on('user:call', async ({ toUserId, offer }) => {
+  socket.on('user:call', async ({ toUserId, offer,isVideo }) => {
     const toSocketId = await getUserSocketId(toUserId);
     const callerDetails = await User.findById(userId);
     if (toSocketId) {
-      io.to(toSocketId).emit('incoming:call', { from: socket.id, offer, callerDetails });
+      io.to(toSocketId).emit('incoming:call', { from: socket.id, offer, callerDetails,isVideo });
       io.to(socket.id).emit('user:socket:id', { to: toSocketId });
     }
   });

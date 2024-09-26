@@ -2,28 +2,60 @@ import { useSocket } from "@/context/SocketContext";
 import { useTypedSelector } from "@/hooks/useRedux";
 import peer from "@/services/webrtc/peer";
 import { FaMicrophone } from "react-icons/fa";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ReactPlayer from "react-player";
 import { IoCall, IoVideocam, IoVideocamOff } from "react-icons/io5";
 import { ImPhoneHangUp } from "react-icons/im";
 import { FaMicrophoneSlash } from "react-icons/fa6";
 import { UserType } from "@/redux/userSlice";
 
-function VideoCall() {
-  const [myStream, setMyStream] = useState<MediaStream | null>(null);
+type VideoCallProps = {
+  myStream: MediaStream | null;
+  offer: RTCSessionDescriptionInit | undefined | null;
+  isIncoming: boolean;
+  isCalling: boolean;
+  isConnected: boolean;
+  remoteSocketIdRef: React.MutableRefObject<string | null>;
+  callerDetailsRef: React.MutableRefObject<UserType | null>;
+  setMyStream: React.Dispatch<React.SetStateAction<MediaStream | null>>;
+  setOffer: (value: RTCSessionDescriptionInit | undefined | null) => void;
+  setIsIncoming: (value: boolean) => void;
+  setIsCalling: (value: boolean) => void;
+  setIsConnected: (value: boolean) => void;
+  isVideoRef: React.MutableRefObject<boolean>;
+};
+
+export type OfferFromServer = {
+  offer?: RTCSessionDescriptionInit;
+  ans?: RTCSessionDescriptionInit;
+  callerDetails?: UserType;
+  isVideo?: boolean;
+  from?: string;
+};
+
+function VideoCall({
+  myStream,
+  offer,
+  isIncoming,
+  isCalling,
+  isConnected,
+  remoteSocketIdRef,
+  callerDetailsRef,
+  setMyStream,
+  setOffer,
+  setIsIncoming,
+  setIsCalling,
+  setIsConnected,
+  isVideoRef,
+}: VideoCallProps) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-  // const [remoteSocketId, setRemoteSocketId] = useState<string | null>(null);
-  const [offer, setOffer] = useState<any | null>(null);
-  const [isIncoming, setIsIncoming] = useState(false);
-  const [isCalling, setIsCalling] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [time, setTime] = useState<number>(0); // Time in seconds
+  const [isRunning, setIsRunning] = useState<boolean>(false);
 
   const { selectedUser } = useTypedSelector((store) => store.user);
   const socket = useSocket();
-  const remoteSocketIdRef = useRef<string | null>(null);
-  const callerDetailsRef = useRef<UserType | null>(null);
 
   const sendStreams = useCallback(async () => {
     const senders = peer.peer?.getSenders();
@@ -37,35 +69,47 @@ function VideoCall() {
     }
   }, [myStream]);
 
-  const handleCallUser = useCallback(async () => {
-    setIsCalling(true);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    const offer = await peer.getOffer();
-    socket?.emit("user:call", { toUserId: selectedUser?._id, offer });
-    setMyStream(stream);
-  }, [socket, selectedUser]);
+  const webrtcClose = useCallback(() => {
+    myStream?.getTracks().forEach((track) => track.stop());
+    peer.peer?.close();
+    peer.createNewPeerConnection();
+  }, [myStream]);
 
-  const handleIncomingCall = useCallback(
-    async ({ from, offer, callerDetails }) => {
-      setIsIncoming(true);
-      callerDetailsRef.current = callerDetails;
+  useEffect(() => {
+    let timer;
 
-      remoteSocketIdRef.current = from;
-      setOffer(offer);
-    },
-    [],
-  );
+    if (isRunning) {
+      timer = setInterval(() => {
+        setTime((prevTime) => prevTime + 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRunning]);
+
+  // Function to start the stopwatch
+  const startStopwatch = () => {
+    setIsRunning(true);
+  };
+
+  // Function to stop the stopwatch
+  const stopStopwatch = () => {
+    setIsRunning(false);
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   const handleCallAccept = useCallback(async () => {
     setIsIncoming(false);
-    setIsCalling(false);
     setIsConnected(true);
 
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
+      video: isVideoRef.current,
       audio: true,
     });
     setMyStream(stream);
@@ -74,16 +118,27 @@ function VideoCall() {
       socket?.emit("call:accepted", { to: remoteSocketIdRef.current, ans });
     }
     sendStreams();
-  }, [offer, remoteSocketIdRef, socket, sendStreams]);
+    startStopwatch();
+  }, [
+    setIsIncoming,
+    setIsConnected,
+    isVideoRef,
+    setMyStream,
+    offer,
+    sendStreams,
+    socket,
+    remoteSocketIdRef,
+  ]);
 
   const handleCallAccepted = useCallback(
-    async ({ from, ans }) => {
-      await peer.setLocalDescription(ans);
+    async ({ ans }: OfferFromServer) => {
+      if (ans) await peer.setLocalDescription(ans);
       sendStreams();
       setIsCalling(false);
       setIsConnected(true);
+      startStopwatch();
     },
-    [sendStreams],
+    [sendStreams, setIsCalling, setIsConnected],
   );
 
   const handleNegoNeeded = useCallback(async () => {
@@ -100,26 +155,26 @@ function VideoCall() {
   }, [handleNegoNeeded]);
 
   const handleNegoNeedIncomming = useCallback(
-    async ({ from, offer }) => {
-      const ans = await peer.getAnswer(offer);
-      socket?.emit("peer:nego:done", { to: from, ans });
-      sendStreams();
+    async ({ from, offer }: OfferFromServer) => {
+      if (offer) {
+        const ans = await peer.getAnswer(offer);
+        socket?.emit("peer:nego:done", { to: from, ans });
+        sendStreams();
+      }
     },
     [socket, sendStreams],
   );
 
   const handleNegoNeedDone = useCallback(
-    async ({ from, ans }) => {
-      await peer.setLocalDescription(ans);
+    async ({ ans }: OfferFromServer) => {
+      if (ans) await peer.setLocalDescription(ans);
       sendStreams();
     },
     [sendStreams],
   );
 
   const handleCallHangup = useCallback(() => {
-    myStream?.getTracks().forEach((track) => track.stop());
-    peer.peer?.close();
-    peer.createNewPeerConnection();
+    webrtcClose();
     socket?.emit("call:hangup", { to: remoteSocketIdRef.current });
 
     setMyStream(null);
@@ -129,12 +184,18 @@ function VideoCall() {
     setIsMuted(false);
     setIsVideoOff(false);
     setOffer(null);
-  }, [myStream, remoteSocketIdRef, socket]);
+    stopStopwatch();
+  }, [
+    remoteSocketIdRef,
+    setIsConnected,
+    setMyStream,
+    setOffer,
+    socket,
+    webrtcClose,
+  ]);
 
   const handleCallEnd = useCallback(() => {
-    myStream?.getTracks().forEach((track) => track.stop());
-    peer.peer?.close();
-    peer.createNewPeerConnection();
+    webrtcClose();
 
     setMyStream(null);
     setRemoteStream(null);
@@ -143,40 +204,37 @@ function VideoCall() {
     setIsMuted(false);
     setIsVideoOff(false);
     setOffer(null);
-  }, [myStream]);
+    stopStopwatch();
+  }, [remoteSocketIdRef, setIsConnected, setMyStream, setOffer, webrtcClose]);
 
   const handleCallReject = useCallback(() => {
     socket?.emit("call:rejected", { to: remoteSocketIdRef.current });
     setIsIncoming(false);
     remoteSocketIdRef.current = null;
     setOffer(null);
-  }, [socket, remoteSocketIdRef]);
+  }, [socket, remoteSocketIdRef, setIsIncoming, setOffer]);
 
   const handleCallRejected = useCallback(() => {
-    myStream?.getTracks().forEach((track) => track.stop());
-    peer.peer?.close();
-    peer.createNewPeerConnection();
+    webrtcClose();
     remoteSocketIdRef.current = null;
     setIsCalling(false);
     setMyStream(null);
-  }, [myStream, remoteSocketIdRef]);
+  }, [remoteSocketIdRef, setIsCalling, setMyStream, webrtcClose]);
 
   const handleCallStop = useCallback(() => {
     socket?.emit("call:stop", { to: remoteSocketIdRef.current });
-    myStream?.getTracks().forEach((track) => track.stop());
-    peer.peer?.close();
-    peer.createNewPeerConnection();
+    webrtcClose();
     remoteSocketIdRef.current = null;
 
     setIsCalling(false);
     setMyStream(null);
-  }, [socket, remoteSocketIdRef, myStream]);
+  }, [socket, remoteSocketIdRef, webrtcClose, setIsCalling, setMyStream]);
 
   const handleCallStopped = useCallback(() => {
     setIsIncoming(false);
     remoteSocketIdRef.current = null;
     setOffer(null);
-  }, []);
+  }, [remoteSocketIdRef, setIsIncoming, setOffer]);
 
   const handleToggleMute = useCallback(() => {
     myStream?.getAudioTracks().forEach((track) => {
@@ -200,12 +258,15 @@ function VideoCall() {
     });
   }, []);
 
-  const userSocketId = useCallback(({ to }) => {
-    remoteSocketIdRef.current = to;
-  }, []);
+  const userSocketId = useCallback(
+    ({ to }) => {
+      remoteSocketIdRef.current = to;
+    },
+    [remoteSocketIdRef],
+  );
 
   useEffect(() => {
-    socket?.on("incoming:call", handleIncomingCall);
+    // socket?.on("incoming:call", handleIncomingCall);
     socket?.on("call:accepted", handleCallAccepted);
     socket?.on("peer:nego:needed", handleNegoNeedIncomming);
     socket?.on("peer:nego:done", handleNegoNeedDone);
@@ -215,7 +276,7 @@ function VideoCall() {
     socket?.on("call:stop", handleCallStopped);
 
     return () => {
-      socket?.off("incoming:call", handleIncomingCall);
+      // socket?.off("incoming:call", handleIncomingCall);
       socket?.off("call:accepted", handleCallAccepted);
       socket?.off("peer:nego:needed", handleNegoNeedIncomming);
       socket?.off("peer:nego:done", handleNegoNeedDone);
@@ -226,7 +287,7 @@ function VideoCall() {
     };
   }, [
     socket,
-    handleIncomingCall,
+    // handleIncomingCall,
     handleCallAccepted,
     handleNegoNeedIncomming,
     handleNegoNeedDone,
@@ -238,13 +299,6 @@ function VideoCall() {
 
   return (
     <>
-      <div className="absolute right-6">
-        <IoVideocam
-          className="h-6 w-6 cursor-pointer"
-          onClick={handleCallUser}
-        />
-        <IoCall className="h-6 w-6 cursor-pointer" onClick={handleCallUser} />
-      </div>
       <div>
         {(isCalling || isIncoming || isConnected) && (
           <div className="fixed inset-0 z-10 flex items-center justify-center backdrop-blur-sm">
@@ -262,18 +316,25 @@ function VideoCall() {
               )}
               <div className="h-full">
                 {/* {remoteStream ? ( */}
-                <ReactPlayer height="full" playing url={remoteStream} />
-                {!remoteStream && (
-                  <div className="flex h-full flex-col items-center justify-center gap-2">
+                <ReactPlayer
+                  height={`${isConnected && !isVideoRef.current ? "0" : "full"}`}
+                  playing
+                  url={remoteStream}
+                />
+                {(!isConnected || (isConnected && !isVideoRef.current)) && (
+                  <div
+                    className={`flex h-full flex-col items-center justify-center gap-2`}
+                  >
                     <div
                       className={`flex h-40 w-40 items-center justify-center overflow-hidden rounded-full bg-primary`}
                     >
-                      {(isCalling && selectedUser?.avatar) ||
-                      (isIncoming && callerDetailsRef.current) ? (
+                      {selectedUser?.avatar ||
+                      callerDetailsRef.current?.avatar ? (
                         <div className="h-full w-full rounded-full">
                           <img
                             src={
-                              isCalling
+                              isCalling ||
+                              (!isVideoRef.current && !callerDetailsRef.current)
                                 ? selectedUser?.avatar
                                 : callerDetailsRef.current?.avatar
                             }
@@ -282,18 +343,22 @@ function VideoCall() {
                           />
                         </div>
                       ) : (
-                        <h2 className="text-2xl font-semibold text-black">
-                          {(isCalling
-                            ? selectedUser?.username
-                            : callerDetailsRef.current?.username
-                          )
-                            ?.charAt(0)
-                            .toUpperCase()}
-                        </h2>
+                        !isConnected && (
+                          <h2 className="text-2xl font-semibold text-black">
+                            {(isCalling ||
+                            (!isVideoRef.current && !callerDetailsRef.current)
+                              ? selectedUser?.username
+                              : callerDetailsRef.current?.username
+                            )
+                              ?.charAt(0)
+                              .toUpperCase()}
+                          </h2>
+                        )
                       )}
                     </div>
                     <h1 className="text-3xl font-semibold text-white">
-                      {isCalling
+                      {isCalling ||
+                      (!isVideoRef.current && !callerDetailsRef.current)
                         ? selectedUser?.username
                         : callerDetailsRef.current?.username}
                     </h1>
@@ -307,16 +372,18 @@ function VideoCall() {
               <ul className="my-4 flex justify-center gap-4 text-white">
                 {isConnected && (
                   <>
-                    <li
-                      className="cursor-pointer rounded-full bg-green-600 p-3"
-                      onClick={handleToggleVideoOff}
-                    >
-                      {isVideoOff ? (
-                        <IoVideocamOff className="h-5 w-5" />
-                      ) : (
-                        <IoVideocam className="h-5 w-5" />
-                      )}
-                    </li>
+                    {isVideoRef.current && (
+                      <li
+                        className="cursor-pointer rounded-full bg-green-600 p-3"
+                        onClick={handleToggleVideoOff}
+                      >
+                        {isVideoOff ? (
+                          <IoVideocamOff className="h-5 w-5" />
+                        ) : (
+                          <IoVideocam className="h-5 w-5" />
+                        )}
+                      </li>
+                    )}
                     <li
                       className="cursor-pointer rounded-full bg-green-600 p-3"
                       onClick={handleToggleMute}
@@ -352,6 +419,7 @@ function VideoCall() {
                   </li>
                 )}
               </ul>
+              {isConnected && <h3>{formatTime(time)}</h3>}
             </div>
           </div>
         )}
