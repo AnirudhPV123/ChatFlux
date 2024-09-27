@@ -22,7 +22,7 @@ const createAGroupChat = async ({ participants, groupName }) => {
 const deleteChat = async (chatId, userId) => {
   return await apiClient.delete(`/api/v1/chat/delete/${chatId}/${userId}`);
   // const data = { chatId, userId };
-// TODO: for sometime need userId to send notification
+  // TODO: for sometime need userId to send notification
   // return await apiClient.delete(`/api/v1/chat/delete/`, data);
 };
 
@@ -50,6 +50,10 @@ const addUserToGroup = async (groupId, userId) => {
   );
 };
 
+const getAllCalls = async () => {
+  return await apiClient.get("/api/v1/chat/calls");
+};
+
 export {
   getAllChats,
   createAOneOnOneChat,
@@ -60,4 +64,5 @@ export {
   getGroupMembersDetails,
   removeUserFromGroup,
   addUserToGroup,
+  getAllCalls,
 };

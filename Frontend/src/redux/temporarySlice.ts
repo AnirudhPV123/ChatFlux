@@ -20,13 +20,14 @@ type InitialState = {
       format: string;
     };
   } | null;
+  bottomBarIsCall: boolean;
 };
 
 const initialState: InitialState = {
   chatSearch: [],
   messageReplyDetails: null, //reply message details (messageId,message owner id),
   groupMembers: null,
-  // selectedChat:null
+  bottomBarIsCall: false,
 };
 
 const temporarySlice = createSlice({
@@ -39,16 +40,17 @@ const temporarySlice = createSlice({
     setMessageReplyDetails: (state, action) => {
       state.messageReplyDetails = action.payload;
     },
-    // setSelectedChat:(state,action)=>{
-    //   state.selectedChat=action.payload
-    // }
     setGroupMembers: (state, action) => {
       state.groupMembers = action.payload;
+    },
+    setBottomBarIsCall: (state, action) => {
+      state.bottomBarIsCall = action.payload
     },
     resetTemporarySlice: (state) => {
       state.chatSearch = [];
       state.messageReplyDetails = null;
       state.groupMembers = null;
+      state.bottomBarIsCall = false
     },
   },
 });
@@ -57,5 +59,6 @@ export const {
   setGroupMembers,
   setMessageReplyDetails,
   resetTemporarySlice,
+  setBottomBarIsCall
 } = temporarySlice.actions;
 export default temporarySlice.reducer;

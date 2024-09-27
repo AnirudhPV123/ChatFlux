@@ -4,6 +4,7 @@ import storage from "redux-persist/lib/storage";
 import chatReducer from "./chatSlice.ts";
 import temporarySlice from "./temporarySlice.ts";
 import messageReducer from "./messageSlice.ts";
+import callReducer from "./callSlice.ts";
 
 import {
   persistReducer,
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   chat: chatReducer,
   temporary: temporarySlice,
   message: messageReducer,
+  call: callReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

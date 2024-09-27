@@ -5,6 +5,7 @@ import {
   deleteChat,
   deleteGroup,
   getAllChats,
+  getCalls,
   groupMembersDetails,
   leaveGroup,
   removeUserFromGroup,
@@ -25,4 +26,5 @@ router.route('/delete-group/:id').delete(verifyJWT, deleteGroup);
 router.route('/leave-group/:id').put(verifyJWT, leaveGroup);
 router.route('/remove-user-from-group/:groupId/:userId').put(verifyJWT, removeUserFromGroup);
 
+router.route('/calls').get(verifyJWT, getCalls);
 export default router;

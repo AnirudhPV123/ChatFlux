@@ -36,6 +36,7 @@ function ChatHeader() {
   const remoteSocketIdRef = useRef<string | null>(null);
   const callerDetailsRef = useRef<UserType | null>(null);
   const isVideoRef = useRef(false);
+  const callIdRef = useRef<string | null>(null);
 
   const socket = useSocket();
 
@@ -103,9 +104,16 @@ function ChatHeader() {
   );
 
   const handleIncomingCall = useCallback(
-    async ({ from, offer, callerDetails, isVideo }: OfferFromServer) => {
+    async ({
+      from,
+      offer,
+      callerDetails,
+      isVideo,
+      callId,
+    }: OfferFromServer) => {
       setIsIncoming(true);
       console.log(from, offer, callerDetails, isVideo);
+      callIdRef.current = callId;
       if (from && callerDetails && isVideo !== undefined) {
         isVideoRef.current = isVideo;
         console.log("isVideo", isVideo);
@@ -169,6 +177,8 @@ function ChatHeader() {
           />
         </div>
 
+        {/* 30 s cut call automatically */}
+
         {(isCalling || isIncoming || isConnected) && (
           <VideoCall
             myStream={myStream}
@@ -184,6 +194,7 @@ function ChatHeader() {
             setIsCalling={setIsCalling}
             setIsConnected={setIsConnected}
             isVideoRef={isVideoRef}
+            callIdRef={callIdRef}
           />
         )}
       </div>

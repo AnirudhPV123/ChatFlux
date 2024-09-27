@@ -1,12 +1,10 @@
 import { useMemo } from "react";
 import Chat from "./Chat";
 import { useTypedSelector } from "@/hooks/useRedux";
-import useGetAllChats from "@/hooks/chat/useGetAllChats";
+
 import { ChatType } from "@/redux/chatSlice";
 
 function AllChats() {
-  useGetAllChats();
-
   const { chats } = useTypedSelector((store) => store.chat);
   const { chatSearch } = useTypedSelector((store) => store.temporary);
 

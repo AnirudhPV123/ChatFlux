@@ -1,3 +1,4 @@
+import { Call } from '@/models/call.model';
 import { Conversation } from '@/models/conversation.model';
 import { Message } from '@/models/message.model';
 import { asyncHandler, CustomError, CustomResponse, emitSocketEvent } from '@/utils';
@@ -418,4 +419,10 @@ export const removeUserFromGroup = asyncHandler(async (req, res, next) => {
   return res
     .status(200)
     .json(new CustomResponse(200, { groupId: chatId }, 'User removed from group Successfully'));
+});
+
+export const getCalls = asyncHandler(async (req, res, next) => {
+  const userId = (req.user as any)._id;
+  const calls = await Call.find({ $or: [{ callerId: userId }, { attenderId: userId }] });
+  return res.status(200).json(new CustomResponse(200, calls, 'Fetched calls successfully'));
 });

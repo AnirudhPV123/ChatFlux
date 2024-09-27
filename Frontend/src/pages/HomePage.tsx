@@ -3,12 +3,18 @@ import SideBar from "../components/SideBar/SideBar";
 import MessageContainer from "@/components/MessageContainer/MessageConatiner";
 import useGetRealTimeMessage from "@/hooks/message/useGetRealTimeMessage";
 import useGetOnlineUsers from "@/hooks/chat/useGetOnlineUsers";
+import useGetRealTimeCall from "@/hooks/chat/useGetRealTImeCall";
+import useGetAllChats from "@/hooks/chat/useGetAllChats";
+import useGetAllCalls from "@/hooks/chat/useGetAllCalls";
 
 function HomePage() {
-  // TODO: useGetOnlineusers later
   useGetOnlineUsers();
   useGetRealTimeMessage();
   useGetRealTimeChat();
+  useGetRealTimeCall();
+  useGetAllChats()
+  useGetAllCalls()
+
   return (
     <div className="home-container flex overflow-y-clip">
       <SideBar />

@@ -8,6 +8,7 @@ import { IoCall, IoVideocam, IoVideocamOff } from "react-icons/io5";
 import { ImPhoneHangUp } from "react-icons/im";
 import { FaMicrophoneSlash } from "react-icons/fa6";
 import { UserType } from "@/redux/userSlice";
+import callingRingTone from "@/assets/sounds/397097__columbia23__phone-ringing.wav";
 
 type VideoCallProps = {
   myStream: MediaStream | null;
@@ -23,6 +24,7 @@ type VideoCallProps = {
   setIsCalling: (value: boolean) => void;
   setIsConnected: (value: boolean) => void;
   isVideoRef: React.MutableRefObject<boolean>;
+  callIdRef: string | null;
 };
 
 export type OfferFromServer = {
@@ -47,15 +49,25 @@ function VideoCall({
   setIsCalling,
   setIsConnected,
   isVideoRef,
+  callIdRef,
 }: VideoCallProps) {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [time, setTime] = useState<number>(0); // Time in seconds
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [audio, setAudio] = useState(null);
 
   const { selectedUser } = useTypedSelector((store) => store.user);
   const socket = useSocket();
+
+  useEffect(() => {
+    if (isCalling || isIncoming) {
+      setAudio(callingRingTone);
+    } else {
+      setAudio(null);
+    }
+  }, [isCalling, isIncoming]);
 
   const sendStreams = useCallback(async () => {
     const senders = peer.peer?.getSenders();
@@ -115,7 +127,11 @@ function VideoCall({
     setMyStream(stream);
     if (offer) {
       const ans = await peer.getAnswer(offer);
-      socket?.emit("call:accepted", { to: remoteSocketIdRef.current, ans });
+      socket?.emit("call:accepted", {
+        to: remoteSocketIdRef.current,
+        ans,
+        callId: callIdRef.current,
+      });
     }
     sendStreams();
     startStopwatch();
@@ -128,6 +144,7 @@ function VideoCall({
     sendStreams,
     socket,
     remoteSocketIdRef,
+    callIdRef,
   ]);
 
   const handleCallAccepted = useCallback(
@@ -175,7 +192,10 @@ function VideoCall({
 
   const handleCallHangup = useCallback(() => {
     webrtcClose();
-    socket?.emit("call:hangup", { to: remoteSocketIdRef.current });
+    socket?.emit("call:hangup", {
+      to: remoteSocketIdRef.current,
+      callId: callIdRef.current,
+    });
 
     setMyStream(null);
     setRemoteStream(null);
@@ -186,6 +206,7 @@ function VideoCall({
     setOffer(null);
     stopStopwatch();
   }, [
+    callIdRef,
     remoteSocketIdRef,
     setIsConnected,
     setMyStream,
@@ -208,11 +229,14 @@ function VideoCall({
   }, [remoteSocketIdRef, setIsConnected, setMyStream, setOffer, webrtcClose]);
 
   const handleCallReject = useCallback(() => {
-    socket?.emit("call:rejected", { to: remoteSocketIdRef.current });
+    socket?.emit("call:rejected", {
+      to: remoteSocketIdRef.current,
+      callId: callIdRef.current,
+    });
     setIsIncoming(false);
     remoteSocketIdRef.current = null;
     setOffer(null);
-  }, [socket, remoteSocketIdRef, setIsIncoming, setOffer]);
+  }, [socket, remoteSocketIdRef, callIdRef, setIsIncoming, setOffer]);
 
   const handleCallRejected = useCallback(() => {
     webrtcClose();
@@ -222,13 +246,23 @@ function VideoCall({
   }, [remoteSocketIdRef, setIsCalling, setMyStream, webrtcClose]);
 
   const handleCallStop = useCallback(() => {
-    socket?.emit("call:stop", { to: remoteSocketIdRef.current });
+    socket?.emit("call:stop", {
+      to: remoteSocketIdRef.current,
+      callId: callIdRef.current || null,
+    });
     webrtcClose();
     remoteSocketIdRef.current = null;
 
     setIsCalling(false);
     setMyStream(null);
-  }, [socket, remoteSocketIdRef, webrtcClose, setIsCalling, setMyStream]);
+  }, [
+    socket,
+    remoteSocketIdRef,
+    callIdRef,
+    webrtcClose,
+    setIsCalling,
+    setMyStream,
+  ]);
 
   const handleCallStopped = useCallback(() => {
     setIsIncoming(false);
@@ -259,11 +293,49 @@ function VideoCall({
   }, []);
 
   const userSocketId = useCallback(
-    ({ to }) => {
+    ({ to, callId }) => {
       remoteSocketIdRef.current = to;
+      callIdRef.current = callId;
     },
-    [remoteSocketIdRef],
+    [remoteSocketIdRef, callIdRef],
   );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isCalling) {
+        handleCallStop();
+      }
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [handleCallReject, handleCallStop, isCalling, isIncoming]);
+
+  // useEffect(() => {
+  //   let audio;
+
+  //   if (isIncoming) {
+  //     // Load and play audio when isCalling is true
+  //     audio = new Audio(
+  //       "../../assets/sounds/397097__columbia23__phone-ringing.wav",
+  //     ); // Provide the correct path to your audio file
+
+  //     audio
+  //       .play()
+  //       .then(() => {
+  //         console.log("Audio is playing");
+  //       })
+  //       .catch((error) => {
+  //         console.error("Failed to play audio:", error);
+  //       });
+  //   }
+
+  //   return () => {
+  //     if (audio) {
+  //       audio.pause();
+  //       audio.currentTime = 0; // Reset the audio to the beginning to avoid play-pause issues
+  //     }
+  //   };
+  // }, [isIncoming]);
 
   useEffect(() => {
     // socket?.on("incoming:call", handleIncomingCall);
@@ -303,6 +375,11 @@ function VideoCall({
         {(isCalling || isIncoming || isConnected) && (
           <div className="fixed inset-0 z-10 flex items-center justify-center backdrop-blur-sm">
             <div className="card h-[70%] bg-neutral p-2 text-neutral-content">
+              {(isCalling || isIncoming) && callingRingTone && (
+                <audio autoPlay loop>
+                  <source src={callingRingTone} type={`audio/wav`} />
+                </audio>
+              )}
               {isConnected && myStream && (
                 <div className="absolute left-2 top-2 z-20 w-[30%]">
                   <ReactPlayer

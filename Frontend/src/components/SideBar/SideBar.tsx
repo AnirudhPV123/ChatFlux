@@ -1,13 +1,15 @@
 import SearchUserOrGroup from "./SearchUserOrGroup";
 import AddChatBtn from "./AddChatBtn";
 import AllChats from "./AllChats";
-import Settings from "./Settings";
 import { useTypedSelector } from "@/hooks/useRedux";
+import BottomBar from "./BottomBar";
+import AllCalls from "./AllCalls";
 
 function SideBar() {
   const { selectedUser, selectedGroup } = useTypedSelector(
     (store) => store.user,
   );
+  const { bottomBarIsCall } = useTypedSelector((store) => store.temporary);
 
   // used to dynamically show messageContainer or sideBar for smaller screen
   if (window.innerWidth < 640 && (selectedUser || selectedGroup)) return;
@@ -20,8 +22,8 @@ function SideBar() {
         <SearchUserOrGroup />
         <AddChatBtn />
       </div>
-      <AllChats />
-      <Settings />
+      {!bottomBarIsCall ? <AllChats /> : <AllCalls />}
+      <BottomBar />
     </div>
   );
 }

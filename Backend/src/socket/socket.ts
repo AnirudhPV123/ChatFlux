@@ -5,6 +5,8 @@ import express, { Application } from 'express';
 import http from 'http';
 import { Message } from '@/models/message.model';
 import { User } from '@/models/user.model';
+import { Call } from '@/models/call.model';
+import { Conversation } from '@/models/conversation.model';
 
 export const app: Application = express();
 export const server = http.createServer(app);
@@ -31,6 +33,18 @@ const removeUserSocketId = async (userId: string) => {
 
 const getAllSocketIds = async () => {
   return await redisClient.hKeys('userSockets');
+};
+
+// New function to get userId based on socketId
+export const getUserIdBySocketId = async (socketId: string) => {
+  const userSockets = await redisClient.hGetAll('userSockets');
+
+  for (const [userId, storedSocketId] of Object.entries(userSockets)) {
+    if (storedSocketId === socketId) {
+      return userId;
+    }
+  }
+  return null;
 };
 
 io.on('connection', async (socket) => {
@@ -84,17 +98,37 @@ io.on('connection', async (socket) => {
   });
 
   // Call logics
-  socket.on('user:call', async ({ toUserId, offer,isVideo }) => {
+  socket.on('user:call', async ({ toUserId, offer, isVideo }) => {
     const toSocketId = await getUserSocketId(toUserId);
     const callerDetails = await User.findById(userId);
+    const conversation = await Conversation.find({
+      isGroupChat: false,
+      participants: { $all: [userId, toUserId] },
+    });
+
+    const call = await Call.create({
+      callerId: userId,
+      attenderId: toUserId,
+      isVideo,
+      isAttend: false,
+      conversationId: conversation[0]._id,
+    });
+
     if (toSocketId) {
-      io.to(toSocketId).emit('incoming:call', { from: socket.id, offer, callerDetails,isVideo });
-      io.to(socket.id).emit('user:socket:id', { to: toSocketId });
+      io.to(toSocketId).emit('incoming:call', {
+        from: socket.id,
+        offer,
+        callerDetails,
+        isVideo,
+        callId: call._id,
+      });
+      io.to(socket.id).emit('user:socket:id', { to: toSocketId, callId: call._id });
     }
   });
 
-  socket.on('call:accepted', ({ to, ans }) => {
+  socket.on('call:accepted', async ({ to, ans, callId }) => {
     io.to(to).emit('call:accepted', { from: socket.id, ans });
+    await Call.findOneAndUpdate({ _id: callId }, { isAttend: true });
   });
 
   socket.on('peer:nego:needed', async ({ to, offer }) => {
@@ -111,16 +145,32 @@ io.on('connection', async (socket) => {
     });
   });
 
-  socket.on('call:hangup', ({ to }) => {
+  socket.on('call:hangup', async ({ to, callId }) => {
+    const callDetails = await Call.findOne({ _id: callId });
+    console.log(callDetails);
+    console.log('call', callId);
+
     io.to(to).emit('call:hangup');
+    io.to(socket.id).emit('new:call', callDetails);
+    io.to(to).emit('new:call', callDetails);
   });
 
-  socket.on('call:rejected', ({ to }) => {
+  socket.on('call:rejected', async ({ to, callId }) => {
     io.to(to).emit('call:rejected');
+    const callDetails = await Call.findOne({ _id: callId });
+
+    io.to(socket.id).emit('new:call', callDetails);
+    io.to(to).emit('new:call', callDetails);
   });
 
-  socket.on('call:stop', ({ to }) => {
+  socket.on('call:stop', async ({ to, callId }) => {
     io.to(to).emit('call:stop');
+    if (callId) {
+      const callDetails = await Call.findOne({ _id: callId });
+
+      io.to(socket.id).emit('new:call', callDetails);
+      io.to(to).emit('new:call', callDetails);
+    }
   });
 
   // end
