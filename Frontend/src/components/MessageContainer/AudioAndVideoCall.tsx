@@ -9,23 +9,7 @@ import { ImPhoneHangUp } from "react-icons/im";
 import { FaMicrophoneSlash } from "react-icons/fa6";
 import { UserType } from "@/redux/userSlice";
 import callingRingTone from "@/assets/sounds/397097__columbia23__phone-ringing.wav";
-
-type VideoCallProps = {
-  myStream: MediaStream | null;
-  offer: RTCSessionDescriptionInit | undefined | null;
-  isIncoming: boolean;
-  isCalling: boolean;
-  isConnected: boolean;
-  remoteSocketIdRef: React.MutableRefObject<string | null>;
-  callerDetailsRef: React.MutableRefObject<UserType | null>;
-  setMyStream: React.Dispatch<React.SetStateAction<MediaStream | null>>;
-  setOffer: (value: RTCSessionDescriptionInit | undefined | null) => void;
-  setIsIncoming: (value: boolean) => void;
-  setIsCalling: (value: boolean) => void;
-  setIsConnected: (value: boolean) => void;
-  isVideoRef: React.MutableRefObject<boolean>;
-  callIdRef: React.MutableRefObject<string | null>;
-};
+import { useCallContext } from "@/context/CallContext";
 
 export type OfferFromServer = {
   offer?: RTCSessionDescriptionInit;
@@ -36,27 +20,29 @@ export type OfferFromServer = {
   callId?: string;
 };
 
-function VideoCall({
-  myStream,
-  offer,
-  isIncoming,
-  isCalling,
-  isConnected,
-  remoteSocketIdRef,
-  callerDetailsRef,
-  setMyStream,
-  setOffer,
-  setIsIncoming,
-  setIsCalling,
-  setIsConnected,
-  isVideoRef,
-  callIdRef,
-}: VideoCallProps) {
+function AudioAndVideoCall() {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [time, setTime] = useState<number>(0); // Time in seconds
   const [isRunning, setIsRunning] = useState<boolean>(false);
+
+  const {
+    myStream,
+    offer,
+    isIncoming,
+    isCalling,
+    isConnected,
+    remoteSocketIdRef,
+    callerDetailsRef,
+    setMyStream,
+    setOffer,
+    setIsIncoming,
+    setIsCalling,
+    setIsConnected,
+    isVideoRef,
+    callIdRef,
+  } = useCallContext();
 
   const { selectedUser } = useTypedSelector((store) => store.user);
   const socket = useSocket();
@@ -293,7 +279,14 @@ function VideoCall({
   );
 
   useEffect(() => {
-    // socket?.on("incoming:call", handleIncomingCall);
+    if (isCalling) {
+      setTimeout(() => {
+        handleCallStop();
+      }, 35000);
+    }
+  }, [handleCallStop, isCalling]);
+
+  useEffect(() => {
     socket?.on("call:accepted", handleCallAccepted);
     socket?.on("peer:nego:needed", handleNegoNeedIncomming);
     socket?.on("peer:nego:done", handleNegoNeedDone);
@@ -303,7 +296,6 @@ function VideoCall({
     socket?.on("call:stop", handleCallStopped);
 
     return () => {
-      // socket?.off("incoming:call", handleIncomingCall);
       socket?.off("call:accepted", handleCallAccepted);
       socket?.off("peer:nego:needed", handleNegoNeedIncomming);
       socket?.off("peer:nego:done", handleNegoNeedDone);
@@ -314,7 +306,6 @@ function VideoCall({
     };
   }, [
     socket,
-    // handleIncomingCall,
     handleCallAccepted,
     handleNegoNeedIncomming,
     handleNegoNeedDone,
@@ -404,7 +395,7 @@ function VideoCall({
                 )}
               </div>
 
-              <ul className="relative flex justify-center gap-4 text-white">
+              <ul className="relative mb-4 flex justify-center gap-4 text-white">
                 {isConnected && isVideoRef.current && (
                   <h3 className="absolute left-4">{formatTime(time)}</h3>
                 )}
@@ -466,4 +457,4 @@ function VideoCall({
   );
 }
 
-export default memo(VideoCall);
+export default memo(AudioAndVideoCall);

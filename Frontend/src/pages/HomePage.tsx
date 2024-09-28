@@ -6,19 +6,22 @@ import useGetOnlineUsers from "@/hooks/chat/useGetOnlineUsers";
 import useGetRealTimeCall from "@/hooks/chat/useGetRealTImeCall";
 import useGetAllChats from "@/hooks/chat/useGetAllChats";
 import useGetAllCalls from "@/hooks/chat/useGetAllCalls";
+import { CallProvider } from "@/context/CallContext";
 
 function HomePage() {
   useGetOnlineUsers();
   useGetRealTimeMessage();
   useGetRealTimeChat();
   useGetRealTimeCall();
-  useGetAllChats()
-  useGetAllCalls()
+  useGetAllChats();
+  useGetAllCalls();
 
   return (
     <div className="home-container flex overflow-y-clip">
       <SideBar />
-      <MessageContainer />
+      <CallProvider>
+        <MessageContainer />
+      </CallProvider>
     </div>
   );
 }

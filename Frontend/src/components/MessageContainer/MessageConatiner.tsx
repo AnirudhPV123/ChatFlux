@@ -1,17 +1,23 @@
-// import Messages from "./Messages";
 import ChatHeader from "./ChatHeader";
-// import SendInput from "./SendInput";
 import { useTypedSelector } from "@/hooks/useRedux";
 import SendInput from "./SendInput";
 import Messages from "./Messages";
+import AudioAndVideoCall from "./AudioAndVideoCall";
+import { useCallContext } from "@/context/CallContext";
 
 function MessageContainer() {
   const { selectedUser, selectedGroup, authUser } = useTypedSelector(
     (store) => store.user,
   );
 
+  const { isIncoming, isConnected } = useCallContext();
+
   // used to dynamically show messageContainer or sideBar for smaller screen
-  if (window.innerWidth < 640 && !selectedUser && !selectedGroup) return;
+  if (window.innerWidth < 640 && !selectedUser && !selectedGroup) {
+    if (isIncoming || isConnected) {
+      return <AudioAndVideoCall />;
+    } else return;
+  }
 
   if (!selectedUser && !selectedGroup) {
     return (
