@@ -126,7 +126,7 @@ const CameraCapture = ({
 
   return (
     <div className="absolute left-0 top-0 z-20 h-full w-full backdrop-blur-sm">
-      <div className="absolute left-1/2 top-1/2 w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-400 bg-[#1D232A] p-4">
+      <div className="absolute left-1/2 top-1/2 w-full -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-400 bg-[#1D232A] p-4 md:w-1/2 lg:w-1/3">
         <div className="mb-4 flex justify-between">
           {isRecording ? (
             <h4>{`${Math.floor(recordingTime / 60)
@@ -173,10 +173,9 @@ const CameraCapture = ({
         {isCamera && !capturedVideo && !capturedPhoto && (
           <Webcam
             audio={true}
-            height={480}
+            className="w-full"
             ref={webcamRef}
             screenshotFormat="image/jpeg"
-            width={720}
             videoConstraints={videoConstraints}
           />
         )}

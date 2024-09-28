@@ -300,15 +300,15 @@ function VideoCall({
     [remoteSocketIdRef, callIdRef],
   );
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isCalling) {
-        handleCallStop();
-      }
-    }, 30000);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     if (isCalling) {
+  //       handleCallStop();
+  //     }
+  //   }, 30000);
 
-    return () => clearTimeout(timer);
-  }, [handleCallReject, handleCallStop, isCalling, isIncoming]);
+  //   return () => clearTimeout(timer);
+  // }, [handleCallReject, handleCallStop, isCalling, isIncoming]);
 
   // useEffect(() => {
   //   let audio;
@@ -374,7 +374,7 @@ function VideoCall({
       <div>
         {(isCalling || isIncoming || isConnected) && (
           <div className="fixed inset-0 z-10 flex items-center justify-center backdrop-blur-sm">
-            <div className="card h-[70%] bg-neutral p-2 text-neutral-content">
+            <div className="card h-full bg-neutral p-2 text-neutral-content md:h-[70%]">
               {(isCalling || isIncoming) && callingRingTone && (
                 <audio autoPlay loop>
                   <source src={callingRingTone} type={`audio/wav`} />
@@ -439,6 +439,9 @@ function VideoCall({
                         ? selectedUser?.username
                         : callerDetailsRef.current?.username}
                     </h1>
+                    {isConnected && !isVideoRef.current && (
+                      <h3>{formatTime(time)}</h3>
+                    )}
                     {!isConnected && (
                       <h3>{isCalling ? "Calling..." : "Incoming..."}</h3>
                     )}{" "}
@@ -446,7 +449,11 @@ function VideoCall({
                 )}
               </div>
 
-              <ul className="my-4 flex justify-center gap-4 text-white">
+              <ul className="relative flex justify-center gap-4 text-white">
+                {isConnected && isVideoRef.current && (
+                  <h3 className="absolute left-4">{formatTime(time)}</h3>
+                )}
+
                 {isConnected && (
                   <>
                     {isVideoRef.current && (
@@ -496,7 +503,6 @@ function VideoCall({
                   </li>
                 )}
               </ul>
-              {isConnected && <h3>{formatTime(time)}</h3>}
             </div>
           </div>
         )}

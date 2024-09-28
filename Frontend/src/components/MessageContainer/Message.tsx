@@ -72,13 +72,7 @@ function Message({ message }: { message: Message }) {
       case "text":
         return <p>{dynamicMessage?.message?.content}</p>;
       case "image":
-        return (
-          <img
-            src={dynamicMessage?.message?.content}
-            alt=""
-            className="w-1/2"
-          />
-        );
+        return <img src={dynamicMessage?.message?.content} alt="" />;
       case "video":
         return (
           <video controls>
@@ -129,7 +123,7 @@ function Message({ message }: { message: Message }) {
         </div>
       </div>
       <div
-        className={`chat-bubble w-fit min-w-[20%] max-w-[80%] lg:max-w-[60%] ${
+        className={`chat-bubble w-fit max-w-[30rem] ${
           isSender && "bg-[#7a85ff] px-2 text-white"
         }`}
       >
@@ -149,7 +143,7 @@ function Message({ message }: { message: Message }) {
                 <Trash2
                   strokeWidth={3}
                   size={20}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-red-500"
                   onClick={async () => {
                     dispatch(setDeleteMessage({ messageId: message?._id }));
                     await deleteMessage(

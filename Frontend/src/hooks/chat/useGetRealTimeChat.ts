@@ -15,7 +15,7 @@ const useGetRealTimeChat = () => {
   useEffect(() => {
     const handleNewChat = (newChat: ChatType) => {
       if (chats) {
-        dispatch(setChats([...chats, newChat]));
+        dispatch(setChats([newChat, ...chats]));
       } else {
         dispatch(setChats(newChat));
       }

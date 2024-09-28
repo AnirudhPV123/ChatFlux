@@ -15,6 +15,7 @@ import CameraCapture from "./Camera";
 import { createTemporaryMessage } from "@/utils/createTemporaryMessage";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import CustomError from "@/types/CustomErrorType";
+import useOrderChatWhenMessage from "@/hooks/chat/useOrderChatWhenMessage";
 
 const DropUpMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +36,7 @@ const DropUpMenu = () => {
   const { messages } = useTypedSelector((store) => store.message);
 
   const dispatch = useTypedDispatch();
+  const updateChats = useOrderChatWhenMessage();
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
@@ -134,6 +136,8 @@ const DropUpMenu = () => {
         messages ? [...messages, temporaryMessage] : [temporaryMessage],
       ),
     );
+
+    updateChats();
     setFile(null);
     setIsOpen(false);
     setCaption("");

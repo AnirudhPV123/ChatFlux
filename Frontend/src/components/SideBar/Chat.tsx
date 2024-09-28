@@ -58,7 +58,7 @@ function Chat({ chat }: { chat: ChatType }) {
       className="user mb-2 flex h-24 cursor-pointer items-center justify-between rounded-lg border border-gray-500 px-8 hover:bg-gray-600"
       onClick={handleSelectUser}
     >
-      <div className="user-info flex h-full w-3/6 items-center gap-4">
+      <div className="user-info flex h-full items-center gap-4">
         <Avatar
           size="h-14 w-14"
           avatar={user?.avatar}

@@ -5,6 +5,7 @@ import { useSocket } from "@/context/SocketContext";
 
 import { ChatType, setChats } from "@/redux/chatSlice";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
+import useOrderChatWhenMessage from "../chat/useOrderChatWhenMessage";
 
 const useGetRealTimeMessage = () => {
   const { messages } = useTypedSelector((store) => store.message);
@@ -54,6 +55,7 @@ const useGetRealTimeMessage = () => {
       // check whether the senderId and selectedUser._id is equal
       // if set message status to seen and send status update to backend
       // else set message status to delivered and send status update to backend
+
       if (
         selectedUser &&
         selectedUser?._id === newMessage.senderId &&
@@ -92,19 +94,6 @@ const useGetRealTimeMessage = () => {
       } else if (newMessage?.conversationId) {
         // message senderId !== selectedUser._id
         // so set status delivered
-        const updatedChats = chats.map((chat: ChatType) => {
-          if (chat._id === newMessage.conversationId) {
-            return {
-              ...chat,
-              lastMessageTime: newMessage?.createdAt,
-              notification: (chat.notification || 0) + 1,
-            };
-          } else {
-            return chat;
-          }
-        });
-
-        dispatch(setChats(updatedChats));
 
         // emit delivered status when sender is not selected
         socket?.emit(
@@ -116,20 +105,6 @@ const useGetRealTimeMessage = () => {
       } else if (newMessage?.groupId) {
         // message senderId !== selectedUser._id
         // so set status delivered
-        const updatedChats = chats.map((chat: ChatType) => {
-          if (chat._id === newMessage.groupId) {
-            return {
-              ...chat,
-              lastMessageTime: newMessage?.createdAt,
-              notification: (chat.notification || 0) + 1,
-            };
-          } else {
-            return chat;
-          }
-        });
-
-        dispatch(setChats(updatedChats));
-
         // emit delivered status when sender is not selected
         socket?.emit(
           "new_message_status_update_from_receiver_to_backend",
@@ -138,6 +113,31 @@ const useGetRealTimeMessage = () => {
           "delivered",
         );
       }
+
+      const chat = chats?.find((chat) => {
+        if (newMessage?.conversationId) {
+          return chat?._id === newMessage?.conversationId;
+        } else if (newMessage?.groupId) {
+          return chat?._id === newMessage?.groupId;
+        }
+      });
+
+      const filterdChats = chats?.filter((chat) => {
+        if (newMessage?.conversationId) {
+          return chat?._id !== newMessage?.conversationId;
+        } else if (newMessage?.groupId) {
+          return chat?._id !== newMessage?.groupId;
+        }
+        return true;
+      });
+
+      console.log(chat);
+      console.log(filterdChats);
+
+      const updatedChats = [chat, ...filterdChats];
+
+      console.log("updatedChats", updatedChats);
+      dispatch(setChats(updatedChats));
     };
 
     // new message

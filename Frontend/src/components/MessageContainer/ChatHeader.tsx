@@ -166,16 +166,18 @@ function ChatHeader() {
           )}{" "}
         </div>
 
-        <div className="absolute right-6 flex gap-6">
-          <IoVideocam
-            className="h-6 w-6 cursor-pointer"
-            onClick={() => handleCallUser({ isVideo: true })}
-          />
-          <IoCall
-            className="h-6 w-6 cursor-pointer"
-            onClick={() => handleCallUser({ isVideo: false })}
-          />
-        </div>
+        {!selectedChat?.isGroupChat && (
+          <div className="absolute right-6 flex gap-6">
+            <IoVideocam
+              className="h-6 w-6 cursor-pointer"
+              onClick={() => handleCallUser({ isVideo: true })}
+            />
+            <IoCall
+              className="h-6 w-6 cursor-pointer"
+              onClick={() => handleCallUser({ isVideo: false })}
+            />
+          </div>
+        )}
 
         {/* 30 s cut call automatically */}
 

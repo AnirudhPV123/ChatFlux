@@ -200,7 +200,7 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
         messages: 0,
       },
     },
-  ]);
+  ]).sort({ updatedAt: -1 });
 
   const groupChats = await Conversation.aggregate([
     {
@@ -240,10 +240,13 @@ export const getAllChats = asyncHandler(async (req, res, next) => {
         lastMessageTime: { $arrayElemAt: ['$messages.createdAt', -1] },
       },
     },
-  ]);
+  ]).sort({ updatedAt: -1 });
 
   // combine both one-on-one and group chats
-  const allChats = [...chats, ...groupChats];
+  // const allChats = [...chats, ...groupChats];
+  const allChats = [...chats, ...groupChats].sort((a, b) => {
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
 
   return res.status(200).json(new CustomResponse(200, allChats, 'Chats fetched successfully'));
 });
@@ -423,6 +426,8 @@ export const removeUserFromGroup = asyncHandler(async (req, res, next) => {
 
 export const getCalls = asyncHandler(async (req, res, next) => {
   const userId = (req.user as any)._id;
-  const calls = await Call.find({ $or: [{ callerId: userId }, { attenderId: userId }] });
+  const calls = await Call.find({
+    $or: [{ callerId: userId }, { attenderId: userId }],
+  }).sort({ updatedAt: -1 }); // Sorts by updatedAt in descending order
   return res.status(200).json(new CustomResponse(200, calls, 'Fetched calls successfully'));
 });

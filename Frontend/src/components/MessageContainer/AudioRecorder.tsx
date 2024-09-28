@@ -1,3 +1,4 @@
+import useOrderChatWhenMessage from "@/hooks/chat/useOrderChatWhenMessage";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import { setMessages, setUpdateMessage } from "@/redux/messageSlice";
 import { setMessageReplyDetails } from "@/redux/temporarySlice";
@@ -24,6 +25,7 @@ function AudioRecorderMic({
   const { messages } = useTypedSelector((store) => store.message);
   const { messageReplyDetails } = useTypedSelector((store) => store.temporary);
   const dispatch = useTypedDispatch();
+  const updateChats = useOrderChatWhenMessage();
 
   const addAudioElement = () => {
     recorderControls.stopRecording();
@@ -70,6 +72,8 @@ function AudioRecorderMic({
           messages ? [...messages, temporaryMessage] : [temporaryMessage],
         ),
       );
+
+      updateChats();
 
       // only run when the condition true
       // helps to reduce unwanted re-renders of code

@@ -11,7 +11,6 @@ function useGetAllCalls() {
     (async function () {
       try {
         const res = await getAllCalls();
-        console.log(res);
         dispatch(setCalls(res.data?.data));
       } catch (error) {
         const customError = error as CustomError;

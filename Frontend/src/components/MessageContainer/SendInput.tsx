@@ -11,6 +11,7 @@ import { createTemporaryMessage } from "@/utils/createTemporaryMessage";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import CustomError from "@/types/CustomErrorType";
 import MessageReplyDetails from "./MessageReplyDetails";
+import useOrderChatWhenMessage from "@/hooks/chat/useOrderChatWhenMessage";
 
 function SendInput() {
   const [message, setMessage] = useState("");
@@ -20,6 +21,7 @@ function SendInput() {
     useTypedSelector((store) => store.user);
   const { messages } = useTypedSelector((store) => store.message);
   const { messageReplyDetails } = useTypedSelector((store) => store.temporary);
+  const updateChats = useOrderChatWhenMessage();
 
   const dispatch = useTypedDispatch();
 
@@ -55,6 +57,8 @@ function SendInput() {
         ),
       );
       setMessage("");
+
+      updateChats();
 
       // only run when the condition true
       // helps to reduce unwanted re-renders of code
@@ -122,13 +126,16 @@ function SendInput() {
           onSubmit={handleSendMessage}
           className="flex grow items-center gap-2"
         >
-          <input
-            type="text"
-            className="input input-bordered grow border-gray-500"
-            placeholder="Message"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+          {((!isAudioRecording && window.innerWidth < 640) ||
+            window.innerWidth >= 640) && (
+            <input
+              type="text"
+              className="input input-bordered grow border-gray-500"
+              placeholder="Message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+          )}
 
           {/* audio recorder */}
           <AudioRecorderMic

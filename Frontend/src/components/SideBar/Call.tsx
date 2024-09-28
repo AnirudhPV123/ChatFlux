@@ -14,9 +14,14 @@ function Call({ callerId, attenderId, isAttend, isVideo, chatId, createdAt }) {
 
   const user = useMemo(() => {
     const chat = chats.filter((chat: ChatType) => chat._id === chatId);
-    const userArray = chat[0].participants.filter(
+
+    console.log(chats);
+    console.log(chatId);
+    console.log("chat", chat);
+    const userArray = chat[0].participants?.filter(
       (particpant) => particpant._id !== authUser?._id,
     );
+
     return userArray[0];
   }, [authUser?._id, chatId, chats]);
 
@@ -33,11 +38,11 @@ function Call({ callerId, attenderId, isAttend, isVideo, chatId, createdAt }) {
     }
   };
 
-  console.log("console",isAttend);
+  console.log("console", isAttend);
 
   return (
     <div className="user mb-2 flex h-24 cursor-pointer items-center justify-between rounded-lg border border-gray-500 px-8 hover:bg-gray-600">
-      <div className="user-info flex h-full w-3/6 items-center gap-4">
+      <div className="user-info flex h-full items-center gap-4">
         <Avatar
           size="h-14 w-14"
           avatar={user?.avatar}

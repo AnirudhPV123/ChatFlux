@@ -42,7 +42,7 @@ function ChatCreateOptions({ setAddChat }: ChatCreateOptionsProps) {
       if (!isGroup) {
         // Create one-on-one chat
         const res = await createAOneOnOneChat(user?._id);
-        dispatch(setChats([...chats, res.data.data[0]]));
+        dispatch(setChats([res.data.data[0],...chats]));
         toast.success("Chat created successfully");
         setUser(null);
       } else {

@@ -13,7 +13,7 @@ function AllCalls() {
     );
   }
 
-  console.log(calls)
+  console.log("calls",calls)
 
   return (
     <div
