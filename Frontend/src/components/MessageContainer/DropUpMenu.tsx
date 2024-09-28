@@ -147,7 +147,7 @@ const DropUpMenu = () => {
     try {
       const res = selectedUser
         ? await sendFileMessage(selectedUser?._id, formData)
-        : await sendGroupFileMessage(selectedGroup?._id, formData);
+        : await sendGroupFileMessage(selectedGroup?._id as string, formData);
 
       if (res?.data?.data) {
         dispatch(

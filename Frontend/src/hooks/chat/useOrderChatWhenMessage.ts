@@ -10,7 +10,6 @@ function useOrderChatWhenMessage() {
 
   return function updateChats() {
     const updatedChats = [selectedChat, ...filterdChats];
-    console.log(updatedChats);
     dispatch(setChats(updatedChats));
   };
 }

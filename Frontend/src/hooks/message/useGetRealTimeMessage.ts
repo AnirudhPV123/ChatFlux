@@ -1,11 +1,8 @@
 import { useEffect } from "react";
-
 import { Message, setMessages } from "@/redux/messageSlice";
 import { useSocket } from "@/context/SocketContext";
-
 import { ChatType, setChats } from "@/redux/chatSlice";
 import { useTypedDispatch, useTypedSelector } from "../useRedux";
-import useOrderChatWhenMessage from "../chat/useOrderChatWhenMessage";
 
 const useGetRealTimeMessage = () => {
   const { messages } = useTypedSelector((store) => store.message);
@@ -17,8 +14,8 @@ const useGetRealTimeMessage = () => {
   const socket = useSocket();
   const dispatch = useTypedDispatch();
 
-  // // set notification of a specific chat to 0 when receiver selected that chat
-  // // receiver
+  // set notification of a specific chat to 0 when receiver selected that chat
+  // receiver
   useEffect(() => {
     if (!chats || (!selectedUser && !selectedGroup)) return;
 
@@ -45,7 +42,7 @@ const useGetRealTimeMessage = () => {
     console.log(updatedChats);
 
     dispatch(setChats(updatedChats));
-  }, [selectedUser, selectedGroup]);
+  }, [selectedUser, selectedGroup, dispatch]);
 
   // receiver gets new message from backend
   // send by backend or receiver (depends)
@@ -55,6 +52,8 @@ const useGetRealTimeMessage = () => {
       // check whether the senderId and selectedUser._id is equal
       // if set message status to seen and send status update to backend
       // else set message status to delivered and send status update to backend
+
+      let updatedChats;
 
       if (
         selectedUser &&
@@ -94,6 +93,18 @@ const useGetRealTimeMessage = () => {
       } else if (newMessage?.conversationId) {
         // message senderId !== selectedUser._id
         // so set status delivered
+        updatedChats = chats.map((chat: ChatType) => {
+          if (chat._id === newMessage.conversationId) {
+            return {
+              ...chat,
+              lastMessageTime: newMessage?.createdAt,
+              notification: (chat.notification || 0) + 1,
+            };
+          } else {
+            return chat;
+          }
+        });
+        // dispatch(setChats(updatedChats));
 
         // emit delivered status when sender is not selected
         socket?.emit(
@@ -103,6 +114,19 @@ const useGetRealTimeMessage = () => {
           "delivered",
         );
       } else if (newMessage?.groupId) {
+        updatedChats = chats.map((chat: ChatType) => {
+          if (chat._id === newMessage.groupId) {
+            return {
+              ...chat,
+              lastMessageTime: newMessage?.createdAt,
+              notification: (chat.notification || 0) + 1,
+            };
+          } else {
+            return chat;
+          }
+        });
+        // dispatch(setChats(updatedChats));
+
         // message senderId !== selectedUser._id
         // so set status delivered
         // emit delivered status when sender is not selected
@@ -114,30 +138,22 @@ const useGetRealTimeMessage = () => {
         );
       }
 
-      const chat = chats?.find((chat) => {
-        if (newMessage?.conversationId) {
-          return chat?._id === newMessage?.conversationId;
-        } else if (newMessage?.groupId) {
-          return chat?._id === newMessage?.groupId;
-        }
+      const sourceChats = updatedChats || chats;
+
+      // Find the chat by either `conversationId` or `groupId`
+      const chat = sourceChats?.find((chat: ChatType) => {
+        const chatId = newMessage?.conversationId || newMessage?.groupId;
+        return chat?._id === chatId;
       });
 
-      const filterdChats = chats?.filter((chat) => {
-        if (newMessage?.conversationId) {
-          return chat?._id !== newMessage?.conversationId;
-        } else if (newMessage?.groupId) {
-          return chat?._id !== newMessage?.groupId;
-        }
-        return true;
+      // Filter out the chat by either `conversationId` or `groupId`
+      const filteredChats = sourceChats?.filter((chat: ChatType) => {
+        const chatId = newMessage?.conversationId || newMessage?.groupId;
+        return chat?._id !== chatId;
       });
 
-      console.log(chat);
-      console.log(filterdChats);
-
-      const updatedChats = [chat, ...filterdChats];
-
-      console.log("updatedChats", updatedChats);
-      dispatch(setChats(updatedChats));
+      const newUpdatedChats = [chat, ...filteredChats];
+      dispatch(setChats(newUpdatedChats));
     };
 
     // new message
@@ -146,7 +162,7 @@ const useGetRealTimeMessage = () => {
     return () => {
       socket?.off("new_message", handleNewMessage);
     };
-  }, [socket, messages, dispatch, chats]);
+  }, [socket, messages, dispatch, chats, selectedUser, selectedGroup]);
 
   // sender gets message status update from backend
   // send ny receiver

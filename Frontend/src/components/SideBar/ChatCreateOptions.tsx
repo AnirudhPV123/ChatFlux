@@ -6,12 +6,15 @@ import toast from "react-hot-toast";
 import { useTypedDispatch, useTypedSelector } from "@/hooks/useRedux";
 import { UserType } from "@/redux/userSlice";
 import { CustomErrorType } from "@/types";
+import useGetAvailableUsers from "@/hooks/chat/useGetAvailableUsers";
 
 type ChatCreateOptionsProps = {
   setAddChat: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 function ChatCreateOptions({ setAddChat }: ChatCreateOptionsProps) {
+    useGetAvailableUsers();
+
   const { chats } = useTypedSelector((store) => store.chat);
   const { availableUsers } = useTypedSelector((store) => store.user);
 
@@ -41,7 +44,7 @@ function ChatCreateOptions({ setAddChat }: ChatCreateOptionsProps) {
     try {
       if (!isGroup) {
         // Create one-on-one chat
-        const res = await createAOneOnOneChat(user?._id);
+        const res = await createAOneOnOneChat(user?._id as string);
         dispatch(setChats([res.data.data[0],...chats]));
         toast.success("Chat created successfully");
         setUser(null);

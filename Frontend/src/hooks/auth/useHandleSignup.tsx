@@ -36,7 +36,6 @@ function useHandleSignup<T>({
         navigate('/')
       } else {
         await mutation.mutateAsync(values as SignUpInitialValues);
-        console.log("signup return");
         next();
       }
     } catch (error) {

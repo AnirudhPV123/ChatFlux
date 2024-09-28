@@ -20,12 +20,10 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { statusCode } = error.response.data || {};
-    console.log("error check:", error.response.data.statusCode);
 
     if (statusCode === 401) {
       // Attempt to refresh the token
-      const res = await api.post("/api/v1/users/refresh-token");
-      console.log("res", res);
+      await api.post("/api/v1/users/refresh-token");
       // Retry the original request with the new token
       const originalRequest = error.config;
       return api.request(originalRequest);

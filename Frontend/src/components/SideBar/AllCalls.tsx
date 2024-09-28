@@ -13,8 +13,6 @@ function AllCalls() {
     );
   }
 
-  console.log("calls",calls)
-
   return (
     <div
       id="users"
@@ -24,7 +22,6 @@ function AllCalls() {
         <Call
           key={call?._id}
           callerId={call?.callerId}
-          attenderId={call?.attenderId}
           isAttend={call?.isAttend}
           isVideo={call?.isVideo}
           chatId={call?.conversationId}

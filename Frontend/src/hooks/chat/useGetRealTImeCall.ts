@@ -10,7 +10,6 @@ const useGetRealTimeCall = () => {
   useEffect(() => {
     const handleNewCall = (newCall: CallType) => {
       dispatch(setCalls([newCall, ...calls]));
-      console.log(newCall);
     };
 
     socket?.on("new:call", handleNewCall);

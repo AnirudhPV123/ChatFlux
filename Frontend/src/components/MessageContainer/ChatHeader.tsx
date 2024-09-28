@@ -113,8 +113,8 @@ function ChatHeader() {
     }: OfferFromServer) => {
       setIsIncoming(true);
       console.log(from, offer, callerDetails, isVideo);
-      callIdRef.current = callId;
-      if (from && callerDetails && isVideo !== undefined) {
+      if (from && callerDetails && isVideo !== undefined && callId) {
+        callIdRef.current = callId;
         isVideoRef.current = isVideo;
         console.log("isVideo", isVideo);
         callerDetailsRef.current = callerDetails;

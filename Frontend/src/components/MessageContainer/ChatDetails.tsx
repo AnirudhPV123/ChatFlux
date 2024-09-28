@@ -42,7 +42,7 @@ function ChatDetails({
   // almost same code as handleRemoveUserFromGroup
   const handleLeaveGroup = useCallback(async () => {
     try {
-      const result = await leaveGroup(selectedChat?._id);
+      const result = await leaveGroup(selectedChat?._id as string);
       const updatedChats = chats.filter(
         (chat: ChatType) => chat?._id !== result?.data?.data?.groupId,
       );
@@ -56,7 +56,7 @@ function ChatDetails({
 
   const handleDeleteOneOnOneChat = useCallback(async () => {
     try {
-      const result = await deleteChat(selectedChat?._id, selectedUser?._id);
+      const result = await deleteChat(selectedChat?._id as string, selectedUser?._id as string);
       const updatedChats = chats.filter(
         (chat: ChatType) => chat?._id !== result?.data?.data?._id,
       );
@@ -70,7 +70,7 @@ function ChatDetails({
 
   const handleDeleteGroup = useCallback(async () => {
     try {
-      const result = await deleteGroup(selectedChat?._id);
+      const result = await deleteGroup(selectedChat?._id as string);
       const updatedChats = chats.filter(
         (chat: ChatType) => chat?._id !== result?.data?.data?.groupId,
       );
@@ -85,7 +85,7 @@ function ChatDetails({
   const handleRemoveUserFromGroup = useCallback(
     async (userId: string, username: string) => {
       try {
-        await removeUserFromGroup(selectedChat?._id, userId);
+        await removeUserFromGroup(selectedChat?._id as string, userId);
 
         const updatedChats = chats.map((chat: ChatType) =>
           chat?._id === selectedChat?._id
@@ -123,7 +123,7 @@ function ChatDetails({
   const handleAddUsersToGroup = useCallback(
     async (userId: string, username: string) => {
       try {
-        await addUserToGroup(selectedChat?._id, userId);
+        await addUserToGroup(selectedChat?._id as string, userId);
 
         const updatedChats = chats.map((chat: ChatType) =>
           chat?._id === selectedChat?._id
@@ -134,7 +134,7 @@ function ChatDetails({
             : chat,
         );
 
-        const result = await getGroupMembersDetails(selectedChat?._id);
+        const result = await getGroupMembersDetails(selectedChat?._id as string);
         dispatch(setGroupMembers(result?.data?.data[0]));
         dispatch(setChats(updatedChats));
         toast.success(

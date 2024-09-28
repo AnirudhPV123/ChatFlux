@@ -20,7 +20,7 @@ function useHandleForgotPassword<T>({
   currentStepIndex: number;
 }) {
   const dispatch: AppDispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const mutation: UseMutationResult<
     AuthResponse,
@@ -42,20 +42,17 @@ function useHandleForgotPassword<T>({
   ) => {
     try {
       if (currentStepIndex === 1) {
-        const res = await mutation.mutateAsync(values);
-        console.log("forgot password", res);
+        await mutation.mutateAsync(values);
         next();
       } else if (currentStepIndex === 2) {
-        const res = await mutation.mutateAsync(values);
-        console.log("forgot otp", res);
+        await mutation.mutateAsync(values);
         next();
       } else if (currentStepIndex === 4) {
         const res = await mutation.mutateAsync(values);
         const data = (res as AuthResponse).data.data;
-        console.log("reset password asdf", data);
         dispatch(setUserSlice(data));
         resetForm();
-        navigate('/')
+        navigate("/");
       }
     } catch (error) {
       const customError = error as CustomError;

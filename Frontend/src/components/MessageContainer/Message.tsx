@@ -148,7 +148,7 @@ function Message({ message }: { message: Message }) {
                     dispatch(setDeleteMessage({ messageId: message?._id }));
                     await deleteMessage(
                       message?._id,
-                      selectedUser ? selectedUser?._id : selectedGroup?._id,
+                      selectedUser ? selectedUser?._id : selectedGroup?._id as string,
                     );
                   }}
                 />

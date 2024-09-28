@@ -15,11 +15,9 @@ function useGetMessages() {
     try {
       if (selectedUser) {
         const res = await getMessages(selectedUser._id);
-        console.log("one-on-one chat get:", res);
         dispatch(setMessages(res?.data?.data));
       } else if (selectedGroup) {
         const res = await getGroupMessages(selectedGroup._id);
-        console.log("group chat get:", res);
         dispatch(setMessages(res?.data?.data));
       }
     } catch (error) {

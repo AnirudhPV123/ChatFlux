@@ -1,21 +1,21 @@
 import apiClient from "./api";
 
-const getMessages = async (id) => {
+const getMessages = async (id: string) => {
   return await apiClient.get(`/api/v1/message/${id}`);
 };
 
 // dynamic code for both normal message and
-const sendMessage = async (id, message, messageReplyDetails) => {
-  console.log("check:", message);
+const sendMessage = async (
+  id: string,
+  message: string,
+  messageReplyDetails: any,
+) => {
   if (messageReplyDetails?.messageToPopUp) {
-    console.log("messagchange:", messageReplyDetails?.messageToPopUp);
-
     messageReplyDetails = {
       replyMessageId: messageReplyDetails.replyMessageId,
       replyMessageUserId: messageReplyDetails.replyMessageUserId,
       status: messageReplyDetails.status,
     };
-    console.log("messag:");
   }
 
   const data = {
@@ -23,21 +23,20 @@ const sendMessage = async (id, message, messageReplyDetails) => {
     ...(messageReplyDetails?.status && { messageReplyDetails }), // details for message reply
   };
 
-  console.log("message", data);
-
   return await apiClient.post(`/api/v1/message/send/${id}`, data);
 };
 
-const sendGroupMessage = async (id, message, messageReplyDetails) => {
+const sendGroupMessage = async (
+  id: string,
+  message: string,
+  messageReplyDetails: any,
+) => {
   if (messageReplyDetails?.messageToPopUp) {
-    console.log("messagchange:", messageReplyDetails?.messageToPopUp);
-
     messageReplyDetails = {
       replyMessageId: messageReplyDetails.replyMessageId,
       replyMessageUserId: messageReplyDetails.replyMessageUserId,
       status: messageReplyDetails.status,
     };
-    console.log("messag:");
   }
 
   const data = {
@@ -48,14 +47,11 @@ const sendGroupMessage = async (id, message, messageReplyDetails) => {
   return await apiClient.post(`/api/v1/message/send-group/${id}`, data);
 };
 
-const getGroupMessages = async (id) => {
+const getGroupMessages = async (id: string) => {
   return await apiClient.get(`/api/v1/message/group/${id}`);
 };
 
-const sendFileMessage = async (id, formData) => {
-  console.log("hi hi hi", formData);
-  console.log("file", formData);
-  console.log("id", id);
+const sendFileMessage = async (id: string, formData: FormData) => {
   return await apiClient.post(`/api/v1/message/send/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -63,8 +59,7 @@ const sendFileMessage = async (id, formData) => {
   });
 };
 
-const sendGroupFileMessage = async (id, formData) => {
-  console.log("groupFile", formData);
+const sendGroupFileMessage = async (id: string, formData: FormData) => {
   return await apiClient.post(`/api/v1/message/send-group/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -72,7 +67,7 @@ const sendGroupFileMessage = async (id, formData) => {
   });
 };
 
-const deleteMessage = async (messageId, id) => {
+const deleteMessage = async (messageId: string, id: string) => {
   return await apiClient.put(
     `/api/v1/message/delete-message/${messageId}/${id}`,
   );

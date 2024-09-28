@@ -25,7 +25,6 @@ function useHandleLogin<T>() {
     try {
       const res = await mutation.mutateAsync(values);
       const data = (res as AuthResponse).data.data;
-      console.log("login return data", data);
       dispatch(setUserSlice(data));
       resetForm();
       navigate("/");
