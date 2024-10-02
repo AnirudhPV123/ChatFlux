@@ -24,7 +24,7 @@ ChatFlux is a real-time messaging, audio and video calling application built usi
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/AnirudhPV123/ChatApp.git
+   git clone https://github.com/AnirudhPV123/ChatFlux.git
 
 2. Set Up Environment Variables
 Copy the .env.sample file and rename it to .env in both the frontend and backend directories.
